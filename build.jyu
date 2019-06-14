@@ -1,0 +1,29 @@
+
+#load "src/Compiler.jyu";
+#load "src/LibC.jyu";
+#load "src/Array.jyu";
+#load "src/Basic.jyu";
+
+func make_directory(path: string) -> bool {
+    typealias mode_t = uint32; // @FixMe this is probably not right
+    func @c_function mkdir(filename: c_string, mode: mode_t) -> int32; // @Unix
+    
+    var c_str = to_c_string(path);
+    var result = mkdir(c_str, 0x1FF);
+    free(c_str);
+    
+    return result == 0;
+}
+
+func main() {
+    var compiler = create_compiler_instance();
+    
+    make_directory("run_tree"); // @FixMe this requires we run build.jyu from the directory it is located in, we need a #filepath mechanism
+    compiler.executable_name = "run_tree/game";
+    
+    if compiler_load_file(compiler, "src/main.jyu") != true return;
+    if compiler_typecheck_program(compiler) != true return;
+    if compiler_generate_llvm_module(compiler) != true return;
+    if compiler_emit_object_file(compiler) != true return;
+    if compiler_run_default_link_command(compiler) != true return;
+}

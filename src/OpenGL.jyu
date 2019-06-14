@@ -1,0 +1,123 @@
+
+typealias GLenum     = uint32;
+typealias GLboolean  = uint8;
+typealias GLbitfield = uint32;
+typealias GLbyte     = int8;
+typealias GLshort    = int16;
+typealias GLint      = int32;
+typealias GLsizei    = int32;
+typealias GLubyte    = uint8;
+typealias GLushort   = uint16;
+typealias GLuint     = uint32;
+typealias GLfloat    = float;
+typealias GLclampf   = float;
+typealias GLdouble   = double;
+typealias GLclampd   = double;
+typealias GLvoid     = void;
+
+let GL_CURRENT_BIT         : GLbitfield = 0x00000001;
+let GL_POINT_BIT           : GLbitfield = 0x00000002;
+let GL_LINE_BIT            : GLbitfield = 0x00000004;
+let GL_POLYGON_BIT         : GLbitfield = 0x00000008;
+let GL_POLYGON_STIPPLE_BIT : GLbitfield = 0x00000010;
+let GL_PIXEL_MODE_BIT      : GLbitfield = 0x00000020;
+let GL_LIGHTING_BIT        : GLbitfield = 0x00000040;
+let GL_FOG_BIT             : GLbitfield = 0x00000080;
+let GL_DEPTH_BUFFER_BIT    : GLbitfield = 0x00000100;
+let GL_ACCUM_BUFFER_BIT    : GLbitfield = 0x00000200;
+let GL_STENCIL_BUFFER_BIT  : GLbitfield = 0x00000400;
+let GL_VIEWPORT_BIT        : GLbitfield = 0x00000800;
+let GL_TRANSFORM_BIT       : GLbitfield = 0x00001000;
+let GL_ENABLE_BIT          : GLbitfield = 0x00002000;
+let GL_COLOR_BUFFER_BIT    : GLbitfield = 0x00004000;
+let GL_HINT_BIT            : GLbitfield = 0x00008000;
+let GL_EVAL_BIT            : GLbitfield = 0x00010000;
+let GL_LIST_BIT            : GLbitfield = 0x00020000;
+let GL_TEXTURE_BIT         : GLbitfield = 0x00040000;
+let GL_SCISSOR_BIT         : GLbitfield = 0x00080000;
+let GL_ALL_ATTRIB_BITS     : GLbitfield = 0xFFFFFFFF;
+
+let GL_POINTS              : GLenum = 0x0000;
+let GL_LINES               : GLenum = 0x0001;
+let GL_LINE_LOOP           : GLenum = 0x0002;
+let GL_LINE_STRIP          : GLenum = 0x0003;
+let GL_TRIANGLES           : GLenum = 0x0004;
+let GL_TRIANGLE_STRIP      : GLenum = 0x0005;
+let GL_TRIANGLE_FAN        : GLenum = 0x0006;
+let GL_QUADS               : GLenum = 0x0007;
+let GL_QUAD_STRIP          : GLenum = 0x0008;
+let GL_POLYGON             : GLenum = 0x0009;
+
+let GL_MATRIX_MODE         : GLenum = 0x0BA0;
+let GL_MODELVIEW           : GLenum = 0x1700;
+let GL_PROJECTION          : GLenum = 0x1701;
+let GL_TEXTURE             : GLenum = 0x1702;
+
+let GL_LIGHTING                 : GLenum = 0x0B50;
+let GL_LIGHT0                   : GLenum = 0x4000;
+let GL_LIGHT1                   : GLenum = 0x4001;
+let GL_LIGHT2                   : GLenum = 0x4002;
+let GL_LIGHT3                   : GLenum = 0x4003;
+let GL_LIGHT4                   : GLenum = 0x4004;
+let GL_LIGHT5                   : GLenum = 0x4005;
+let GL_LIGHT6                   : GLenum = 0x4006;
+let GL_LIGHT7                   : GLenum = 0x4007;
+let GL_SPOT_EXPONENT            : GLenum = 0x1205;
+let GL_SPOT_CUTOFF              : GLenum = 0x1206;
+let GL_CONSTANT_ATTENUATION     : GLenum = 0x1207;
+let GL_LINEAR_ATTENUATION       : GLenum = 0x1208;
+let GL_QUADRATIC_ATTENUATION    : GLenum = 0x1209;
+let GL_AMBIENT                  : GLenum = 0x1200;
+let GL_DIFFUSE                  : GLenum = 0x1201;
+let GL_SPECULAR                 : GLenum = 0x1202;
+let GL_SHININESS                : GLenum = 0x1601;
+let GL_EMISSION                 : GLenum = 0x1600;
+let GL_POSITION                 : GLenum = 0x1203;
+let GL_SPOT_DIRECTION           : GLenum = 0x1204;
+let GL_AMBIENT_AND_DIFFUSE      : GLenum = 0x1602;
+let GL_COLOR_INDEXES            : GLenum = 0x1603;
+let GL_LIGHT_MODEL_TWO_SIDE     : GLenum = 0x0B52;
+let GL_LIGHT_MODEL_LOCAL_VIEWER : GLenum = 0x0B51;
+let GL_LIGHT_MODEL_AMBIENT      : GLenum = 0x0B53;
+let GL_FRONT_AND_BACK           : GLenum = 0x0408;
+let GL_SHADE_MODEL              : GLenum = 0x0B54;
+let GL_FLAT                     : GLenum = 0x1D00;
+let GL_SMOOTH                   : GLenum = 0x1D01;
+let GL_COLOR_MATERIAL           : GLenum = 0x0B57;
+let GL_COLOR_MATERIAL_FACE      : GLenum = 0x0B55;
+let GL_COLOR_MATERIAL_PARAMETER : GLenum = 0x0B56;
+let GL_NORMALIZE                : GLenum = 0x0BA1;
+
+let GL_NEVER                    : GLenum = 0x0200;
+let GL_LESS                     : GLenum = 0x0201;
+let GL_EQUAL                    : GLenum = 0x0202;
+let GL_LEQUAL                   : GLenum = 0x0203;
+let GL_GREATER                  : GLenum = 0x0204;
+let GL_NOTEQUAL                 : GLenum = 0x0205;
+let GL_GEQUAL                   : GLenum = 0x0206;
+let GL_ALWAYS                   : GLenum = 0x0207;
+let GL_DEPTH_TEST               : GLenum = 0x0B71;
+let GL_DEPTH_BITS               : GLenum = 0x0D56;
+let GL_DEPTH_CLEAR_VALUE        : GLenum = 0x0B73;
+let GL_DEPTH_FUNC               : GLenum = 0x0B74;
+let GL_DEPTH_RANGE              : GLenum = 0x0B70;
+let GL_DEPTH_WRITEMASK          : GLenum = 0x0B72;
+let GL_DEPTH_COMPONENT          : GLenum = 0x1902;
+
+func @c_function glEnable(cap: GLenum);
+
+func @c_function glBegin(mode: GLenum);
+func @c_function glEnd();
+func @c_function glColor3f(r: GLfloat, g: GLfloat, b: GLfloat);
+func @c_function glVertex3f(x: GLfloat, y: GLfloat, z: GLfloat);
+func @c_function glNormal3f(nx: GLfloat, ny: GLfloat, nz: GLfloat);
+
+func @c_function glClearColor(r: GLclampf, g: GLclampf, b: GLclampf, a: GLclampf);
+func @c_function glClear(bits: GLbitfield);
+
+func @c_function glMatrixMode(mode: GLenum);
+func @c_function glLoadIdentity();
+
+func @c_function glFrustum(left: GLdouble, right: GLdouble, bottom: GLdouble, top: GLdouble, near_val: GLdouble, far_val: GLdouble);
+func @c_function glTranslatef(x: GLfloat, y: GLfloat, z: GLfloat);
+func @c_function glRotatef(angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat);

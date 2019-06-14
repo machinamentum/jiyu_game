@@ -1,0 +1,123 @@
+
+// jiyu stuff
+
+
+func basename(_s: string) -> string {
+    var s = _s;
+    while (s.length > 0) {
+        if (s[s.length-1] == '/') return s;
+        
+        s.length = s.length - 1;
+    }
+    
+    return s;
+}
+
+func copy_string(input: string) -> string {
+    var data = cast(*uint8) malloc(cast(size_t) input.length);
+    memcpy(data, input.data, cast(size_t) input.length);
+    
+    var o: string;
+    o.data = data;
+    o.length = input.length;
+    return o;
+}
+
+func to_c_string(input: string) -> c_string {
+	var data: c_string = cast(c_string) malloc(cast(size_t) input.length + 1);
+	memcpy(data, input.data, cast(size_t) input.length);
+	data[input.length] = 0;
+	return data;
+}
+
+func c_style_strlen(input: c_string) -> int64 {
+	var cursor = input;
+	while <<cursor != 0 {
+		cursor = cursor + 1;
+	}
+    
+	return cast(int64) (cursor - input);
+}
+
+func to_string(input: c_string) -> string {
+	var s: string;
+	s.data   = input;
+	s.length = c_style_strlen(input);
+	return s;
+}
+
+func split(input: string, delim: uint8) -> [] string {
+	var start = 0;
+	var cursor = 0;
+    
+	var output: [..] string;
+    
+	while cursor < input.length {
+		if input[cursor] == delim {
+			var o: string;
+			o.data = input.data + start;
+			o.length = cursor - start;
+			array_add(*output, o);
+            
+			start = cursor + 1;
+		}
+        
+		cursor = cursor + 1;
+	}
+    
+	var o: string;
+	o.data = input.data + start;
+	o.length = cursor - start;
+	array_add(*output, o);
+    
+	var static: [] string;
+	static.data = output.data;
+	static.count = output.count;
+	return static;
+}
+
+func get_lines(input: string) -> [] string {
+	return split(input, '\n');
+}
+
+func read_entire_file(path: string) -> string {
+	// @FixMe this only works if path points to a constant string
+	var file = fopen(path.data, "rb".data);
+	if file == null return "";
+    
+	fseek(file, 0, SEEK_END);
+	var length = ftell(file);
+	fseek(file, 0, SEEK_SET);
+    
+	var mem = cast(c_string) malloc(length);
+	fread(mem, 1, length, file);
+	// @TODO verify fread success
+    
+	fclose(file);
+    
+	var result: string;
+	result.data = mem;
+	result.length = length;
+	return result;
+}
+
+// @MacOSX
+func get_executable_path() -> string {
+    func @c_function
+        _NSGetExecutablePath(buf: *uint8, bufsize: *uint32) -> int32;
+    
+    var buf: [128] uint8;
+    var bufsize: uint32 = cast(uint32) buf.count;
+    var result = _NSGetExecutablePath(buf.data, *bufsize);
+    if (result != 0) return "";
+    
+    return copy_string(to_string(buf.data));
+}
+
+func set_working_directory(path: string) {
+    func @c_function chdir(path: c_string) -> int32; // @Unix
+    
+    var c_str = to_c_string(path);
+    chdir(c_str);
+    free(c_str);
+}

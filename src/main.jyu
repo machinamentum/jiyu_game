@@ -1,0 +1,178 @@
+
+#load "Array.jyu";
+#load "GLFW.jyu";
+#load "OpenGL.jyu";
+#load "LibC.jyu";
+#load "Basic.jyu";
+
+struct Vector3 {
+	var x: float;
+	var y: float;
+	var z: float;
+}
+
+func make_Vector3(x: float, y: float, z: float) -> Vector3 {
+	var v: Vector3;
+	v.x = x;
+	v.y = y;
+	v.z = z;
+	return v;
+}
+
+struct Model {
+	var vertices:   [..] Vector3;
+	var normals:    [..] Vector3;
+	var tex_coords: [..] Vector3;
+}
+
+func get_float(input: string) -> float {
+	var c_str: [256] uint8;
+	if input.length >= 256 return 0;
+    
+	memcpy(c_str.data, input.data, cast(size_t) input.length);
+	c_str[input.length] = 0;
+    
+	var value = atof(c_str.data);
+	return cast(float) value; 
+}
+
+func get_int(input: string) -> int32 {
+	var c_str: [256] uint8;
+	if input.length >= 256 return 0;
+    
+	memcpy(c_str.data, input.data, cast(size_t) input.length);
+	c_str[input.length] = 0;
+    
+	var value = atoi(c_str.data);
+	return value; 
+}
+
+func load_obj(path: string) -> Model {
+	var data = read_entire_file(path);
+    
+	var lines = get_lines(data);
+	var model: Model;
+    
+	var vertices:   [..] Vector3;
+	var normals:    [..] Vector3;
+	var tex_coords: [..] Vector3;
+    
+	// printf("char: %d\n".data, ' ');
+	for lines {
+		var splits = split(it, ' ');
+        
+		// printf("LINE: '%.*s'\n".data, it.length, it.data);
+		for splits {
+			// printf("SPLIT: '%.*s'\n".data, it.length, it.data);
+		}
+        
+		// @Cleanup continue keyword
+		if splits.count == 0 {
+			// do nothing
+		} else if splits[0] == "v" {
+			var x = get_float(splits[1]);
+			var y = get_float(splits[2]);
+			var z = get_float(splits[3]);
+			array_add(*vertices, make_Vector3(x, y, z));
+		} else if splits[0] == "vn" {
+			var x = get_float(splits[1]);
+			var y = get_float(splits[2]);
+			var z = get_float(splits[3]);
+			array_add(*normals, make_Vector3(x, y, z));
+		} else if splits[0] == "f" {
+			{
+				var sub = split(splits[1], '/');
+				var vi = get_int(sub[0]);
+				var ni = get_int(sub[2]);
+				array_add(*model.vertices, vertices[vi - 1]);
+				array_add(*model.normals,  normals[ni - 1]);
+			}
+            
+			{
+				var sub = split(splits[2], '/');
+				var vi = get_int(sub[0]);
+				var ni = get_int(sub[2]);
+                
+				array_add(*model.vertices, vertices[vi - 1]);
+				array_add(*model.normals,  normals[ni - 1]);
+			}
+            
+			{
+				var sub = split(splits[3], '/');
+				var vi = get_int(sub[0]);
+				var ni = get_int(sub[2]);
+                
+				array_add(*model.vertices, vertices[vi - 1]);
+				array_add(*model.normals,  normals[ni - 1]);
+			}
+		}
+	}
+    
+	free(lines.data);
+	free(data.data);
+	return model;
+}
+
+func perspective(fov: float, aspect: float, near: float, far: float) {
+	var fh = tan(fov) * near;
+	var fw = fh * aspect;
+    
+	glFrustum(-fw, fw, -fh, fh, near, far);
+}
+
+func main() {
+    var exe_path = get_executable_path();
+    set_working_directory(basename(exe_path));
+    
+	glfwInit();
+    
+    let INITIAL_WIDTH = 640;
+    let INITIAL_HEIGHT = 480;
+    
+	var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!".data, 0, 0);
+    
+    var model = load_obj("monkey.obj");
+    
+	glfwMakeContextCurrent(window);
+    
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+    
+	glEnable(GL_DEPTH_TEST);
+    
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+    
+	var width: float = INITIAL_WIDTH;
+	var height: float = INITIAL_HEIGHT;
+	perspective(1, width / height, 1, 1000);
+    
+	glMatrixMode(GL_MODELVIEW);
+	
+	var n: float = 0;
+    
+	while glfwWindowShouldClose(window) == false {
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+		glLoadIdentity();
+		glTranslatef(0, 0, -3);
+		// glRotatef(n, 0, 1, 0);
+        
+		glBegin(GL_TRIANGLES);
+		for 0..model.vertices.count-1 {
+			var v = model.vertices[it];
+			var n = model.normals[it];
+			glVertex3f(v.x, v.y, v.z);
+			glNormal3f(n.x, n.y, n.z);
+		}
+		glEnd();
+        
+		n = n + (cast(float)1 / 4);
+        
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+    
+	glfwTerminate();
+}

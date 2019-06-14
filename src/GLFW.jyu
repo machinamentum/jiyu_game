@@ -1,0 +1,8 @@
+
+func @c_function glfwInit();
+func @c_function glfwCreateWindow(width: int32, height: int32, title: *uint8, unk: int64, unk1: int64) -> *void;
+func @c_function glfwTerminate();
+func @c_function glfwMakeContextCurrent(window: *void);
+func @c_function glfwWindowShouldClose(window: *void) -> bool;
+func @c_function glfwSwapBuffers(window: *void);
+func @c_function glfwPollEvents();
