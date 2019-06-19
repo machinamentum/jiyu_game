@@ -5,25 +5,7 @@
 #load "LibC.jyu";
 #load "Basic.jyu";
 
-struct Vector3 {
-	var x: float;
-	var y: float;
-	var z: float;
-}
-
-func make_Vector3(x: float, y: float, z: float) -> Vector3 {
-	var v: Vector3;
-	v.x = x;
-	v.y = y;
-	v.z = z;
-	return v;
-}
-
-struct Model {
-	var vertices:   [..] Vector3;
-	var normals:    [..] Vector3;
-	var tex_coords: [..] Vector3;
-}
+#load "render.jyu";
 
 func get_float(input: string) -> float {
 	var c_str: [256] uint8;
@@ -110,6 +92,10 @@ func load_obj(path: string) -> Model {
     
 	free(lines.data);
 	free(data.data);
+    
+    array_reset(*vertices);
+    array_reset(*normals);
+    array_reset(*tex_coords);
 	return model;
 }
 
@@ -131,12 +117,12 @@ func main() {
     
 	var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!".data, 0, 0);
     
+    var renderer: Renderer;
+    init(*renderer);
+    
     var model = load_obj("monkey.obj");
     
 	glfwMakeContextCurrent(window);
-    
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
     
 	glEnable(GL_DEPTH_TEST);
     
@@ -148,8 +134,6 @@ func main() {
 	perspective(1, width / height, 1, 1000);
     
 	glMatrixMode(GL_MODELVIEW);
-	
-	var n: float = 0;
     
 	while glfwWindowShouldClose(window) == false {
 		glClearColor(0, 0, 0, 1);
@@ -159,16 +143,7 @@ func main() {
 		glTranslatef(0, 0, -3);
 		// glRotatef(n, 0, 1, 0);
         
-		glBegin(GL_TRIANGLES);
-		for 0..model.vertices.count-1 {
-			var v = model.vertices[it];
-			var n = model.normals[it];
-			glVertex3f(v.x, v.y, v.z);
-			glNormal3f(n.x, n.y, n.z);
-		}
-		glEnd();
-        
-		n = n + (cast(float)1 / 4);
+		render_model(*model);
         
 		glfwSwapBuffers(window);
 		glfwPollEvents();

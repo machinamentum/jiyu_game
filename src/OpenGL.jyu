@@ -1,4 +1,9 @@
 
+typealias ptrdiff_t  = int64; // @FixMe this doesnt belong here and Idk if it is correct.
+
+typealias GLintptr   = ptrdiff_t;
+typealias GLsizeiptr = ptrdiff_t;
+
 typealias GLenum     = uint32;
 typealias GLboolean  = uint8;
 typealias GLbitfield = uint32;
@@ -14,6 +19,21 @@ typealias GLclampf   = float;
 typealias GLdouble   = double;
 typealias GLclampd   = double;
 typealias GLvoid     = void;
+
+let GL_FALSE: GLboolean = 0;
+let GL_TRUE : GLboolean = 1;
+
+let GL_BYTE                : GLenum = 0x1400;
+let GL_UNSIGNED_BYTE       : GLenum = 0x1401;
+let GL_SHORT               : GLenum = 0x1402;
+let GL_UNSIGNED_SHORT      : GLenum = 0x1403;
+let GL_INT                 : GLenum = 0x1404;
+let GL_UNSIGNED_INT        : GLenum = 0x1405;
+let GL_FLOAT               : GLenum = 0x1406;
+let GL_DOUBLE              : GLenum = 0x140A;
+let GL_2_BYTES             : GLenum = 0x1407;
+let GL_3_BYTES             : GLenum = 0x1408;
+let GL_4_BYTES             : GLenum = 0x1409;
 
 let GL_CURRENT_BIT         : GLbitfield = 0x00000001;
 let GL_POINT_BIT           : GLbitfield = 0x00000002;
@@ -104,6 +124,57 @@ let GL_DEPTH_RANGE              : GLenum = 0x0B70;
 let GL_DEPTH_WRITEMASK          : GLenum = 0x0B72;
 let GL_DEPTH_COMPONENT          : GLenum = 0x1902;
 
+let GL_BUFFER_SIZE                          : GLenum = 0x8764;
+let GL_BUFFER_USAGE                         : GLenum = 0x8765;
+let GL_QUERY_COUNTER_BITS                   : GLenum = 0x8864;
+let GL_CURRENT_QUERY                        : GLenum = 0x8865;
+let GL_QUERY_RESULT                         : GLenum = 0x8866;
+let GL_QUERY_RESULT_AVAILABLE               : GLenum = 0x8867;
+let GL_ARRAY_BUFFER                         : GLenum = 0x8892;
+let GL_ELEMENT_ARRAY_BUFFER                 : GLenum = 0x8893;
+let GL_ARRAY_BUFFER_BINDING                 : GLenum = 0x8894;
+let GL_ELEMENT_ARRAY_BUFFER_BINDING         : GLenum = 0x8895;
+let GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING   : GLenum = 0x889F;
+let GL_READ_ONLY                            : GLenum = 0x88B8;
+let GL_WRITE_ONLY                           : GLenum = 0x88B9;
+let GL_READ_WRITE                           : GLenum = 0x88BA;
+let GL_BUFFER_ACCESS                        : GLenum = 0x88BB;
+let GL_BUFFER_MAPPED                        : GLenum = 0x88BC;
+let GL_BUFFER_MAP_POINTER                   : GLenum = 0x88BD;
+let GL_STREAM_DRAW                          : GLenum = 0x88E0;
+let GL_STREAM_READ                          : GLenum = 0x88E1;
+let GL_STREAM_COPY                          : GLenum = 0x88E2;
+let GL_STATIC_DRAW                          : GLenum = 0x88E4;
+let GL_STATIC_READ                          : GLenum = 0x88E5;
+let GL_STATIC_COPY                          : GLenum = 0x88E6;
+let GL_DYNAMIC_DRAW                         : GLenum = 0x88E8;
+let GL_DYNAMIC_READ                         : GLenum = 0x88E9;
+let GL_DYNAMIC_COPY                         : GLenum = 0x88EA;
+let GL_SAMPLES_PASSED                       : GLenum = 0x8914;
+let GL_SRC1_ALPHA                           : GLenum = 0x8589;
+let GL_VERTEX_ARRAY_BUFFER_BINDING          : GLenum = 0x8896;
+let GL_NORMAL_ARRAY_BUFFER_BINDING          : GLenum = 0x8897;
+let GL_COLOR_ARRAY_BUFFER_BINDING           : GLenum = 0x8898;
+let GL_INDEX_ARRAY_BUFFER_BINDING           : GLenum = 0x8899;
+let GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING   : GLenum = 0x889A;
+let GL_EDGE_FLAG_ARRAY_BUFFER_BINDING       : GLenum = 0x889B;
+let GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING : GLenum = 0x889C;
+let GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING  : GLenum = 0x889D;
+let GL_WEIGHT_ARRAY_BUFFER_BINDING          : GLenum = 0x889E;
+let GL_FOG_COORD_SRC                        : GLenum = 0x8450;
+let GL_FOG_COORD                            : GLenum = 0x8451;
+let GL_CURRENT_FOG_COORD                    : GLenum = 0x8453;
+let GL_FOG_COORD_ARRAY_TYPE                 : GLenum = 0x8454;
+let GL_FOG_COORD_ARRAY_STRIDE               : GLenum = 0x8455;
+let GL_FOG_COORD_ARRAY_POINTER              : GLenum = 0x8456;
+let GL_FOG_COORD_ARRAY                      : GLenum = 0x8457;
+let GL_FOG_COORD_ARRAY_BUFFER_BINDING       : GLenum = 0x889D;
+let GL_SRC0_RGB                             : GLenum = 0x8580;
+let GL_SRC1_RGB                             : GLenum = 0x8581;
+let GL_SRC2_RGB                             : GLenum = 0x8582;
+let GL_SRC0_ALPHA                           : GLenum = 0x8588;
+let GL_SRC2_ALPHA                           : GLenum = 0x858A;
+
 func @c_function glEnable(cap: GLenum);
 
 func @c_function glBegin(mode: GLenum);
@@ -121,3 +192,19 @@ func @c_function glLoadIdentity();
 func @c_function glFrustum(left: GLdouble, right: GLdouble, bottom: GLdouble, top: GLdouble, near_val: GLdouble, far_val: GLdouble);
 func @c_function glTranslatef(x: GLfloat, y: GLfloat, z: GLfloat);
 func @c_function glRotatef(angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat);
+
+func @c_function glBindVertexArray(array: GLuint);
+func @c_function glGenVertexArrays(n: GLsizei, arrays: *GLuint);
+
+func @c_function glGenBuffers(n: GLsizei, buffers: *GLuint);
+func @c_function glBindBuffer(target: GLenum, buffer: GLuint);
+func @c_function glBufferData(target: GLenum, size: GLsizei, data: *void, usage: GLenum);
+
+func @c_function glBufferSubData(target: GLenum, offset: GLintptr, size: GLsizeiptr, data: *GLvoid);
+
+func @c_function glVertexAttribPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid);
+func @c_function glVertexAttribIPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid);
+
+func @c_function glEnableVertexAttribArray (index: GLuint);
+func @c_function glDisableVertexAttribArray(index: GLuint);
+func @c_function glDrawArrays(mode: GLenum, first: GLint, count: GLsizei);

@@ -1,0 +1,98 @@
+
+struct Renderer {
+    var global_vao_handle: GLuint;
+    
+    
+}
+
+func init(renderer: *Renderer) {
+    glGenVertexArrays(1, *renderer.global_vao_handle);
+    glBindVertexArray(renderer.global_vao_handle);
+    
+    
+}
+
+let ATTRIB_POSITION : GLuint = 0;
+let ATTRIB_NORMAL   : GLuint = 1;
+let ATTRIB_TEX_COORD: GLuint = 2;
+
+struct Vector3 {
+	var x: float;
+	var y: float;
+	var z: float;
+}
+
+func make_Vector3(x: float, y: float, z: float) -> Vector3 {
+	var v: Vector3;
+	v.x = x;
+	v.y = y;
+	v.z = z;
+	return v;
+}
+
+struct Model {
+    var vbo_handle: GLuint;
+    var is_dirty: bool = true;
+    
+	var vertices:   [..] Vector3;
+	var normals:    [..] Vector3;
+	var tex_coords: [..] Vector3;
+}
+
+func cache_to_vertex_buffer(model: *Model) {
+    if model.vbo_handle == 0 {
+        glGenBuffers(1, *model.vbo_handle);
+    }
+    
+    if model.is_dirty == false {
+        return;
+    }
+    
+    var vert_size   = model.vertices.count*sizeof(Vector3);
+    var normal_size = model.normals.count*sizeof(Vector3);
+    var tex_size    = model.tex_coords.count*sizeof(Vector3);
+    
+    var total_size = vert_size+normal_size+tex_size;
+    
+    glBindBuffer(GL_ARRAY_BUFFER, model.vbo_handle);
+    glBufferData(GL_ARRAY_BUFFER, cast(GLsizei) total_size, null, GL_STATIC_DRAW);
+    
+    glBufferSubData(GL_ARRAY_BUFFER, 0,         vert_size,   model.vertices.data);
+    glBufferSubData(GL_ARRAY_BUFFER, vert_size, normal_size, model.normals.data);
+    glBufferSubData(GL_ARRAY_BUFFER, vert_size+normal_size, tex_size, model.tex_coords.data);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    
+    model.is_dirty = false;
+}
+
+func render_model(model: *Model) {
+    cache_to_vertex_buffer(model);
+    
+    /*
+    glBegin(GL_TRIANGLES);
+    for 0..model.vertices.count-1 {
+        var v = model.vertices[it];
+        var n = model.normals[it];
+        glVertex3f(v.x, v.y, v.z);
+        glNormal3f(n.x, n.y, n.z);
+    }
+    glEnd();
+    */
+    
+    glBindBuffer(GL_ARRAY_BUFFER, model.vbo_handle);
+    glEnableVertexAttribArray(ATTRIB_POSITION);
+    glEnableVertexAttribArray(ATTRIB_NORMAL);
+    
+    var vert_size   = model.vertices.count*sizeof(Vector3);
+    var normal_size = model.normals.count*sizeof(Vector3);
+    var tex_size    = model.tex_coords.count*sizeof(Vector3);
+    
+    glVertexAttribPointer(ATTRIB_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), cast(*void) 0);
+    glVertexAttribPointer(ATTRIB_NORMAL,   3, GL_FLOAT, GL_FALSE, sizeof(Vector3), cast(*void) vert_size);
+    
+    glDrawArrays(GL_TRIANGLES, 0, cast(GLint) model.vertices.count);
+    
+    glDisableVertexAttribArray(ATTRIB_POSITION);
+    glDisableVertexAttribArray(ATTRIB_NORMAL);
+}
