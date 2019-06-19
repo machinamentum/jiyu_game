@@ -17,26 +17,26 @@ let ATTRIB_NORMAL   : GLuint = 1;
 let ATTRIB_TEX_COORD: GLuint = 2;
 
 struct Vector3 {
-	var x: float;
-	var y: float;
-	var z: float;
+    var x: float;
+    var y: float;
+    var z: float;
 }
 
 func make_Vector3(x: float, y: float, z: float) -> Vector3 {
-	var v: Vector3;
-	v.x = x;
-	v.y = y;
-	v.z = z;
-	return v;
+    var v: Vector3;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    return v;
 }
 
 struct Model {
     var vbo_handle: GLuint;
     var is_dirty: bool = true;
     
-	var vertices:   [..] Vector3;
-	var normals:    [..] Vector3;
-	var tex_coords: [..] Vector3;
+    var vertices:   [..] Vector3;
+    var normals:    [..] Vector3;
+    var tex_coords: [..] Vector3;
 }
 
 func cache_to_vertex_buffer(model: *Model) {

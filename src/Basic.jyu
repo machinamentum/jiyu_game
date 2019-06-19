@@ -24,81 +24,81 @@ func copy_string(input: string) -> string {
 }
 
 func to_c_string(input: string) -> c_string {
-	var data: c_string = cast(c_string) malloc(cast(size_t) input.length + 1);
-	memcpy(data, input.data, cast(size_t) input.length);
-	data[input.length] = 0;
-	return data;
+    var data: c_string = cast(c_string) malloc(cast(size_t) input.length + 1);
+    memcpy(data, input.data, cast(size_t) input.length);
+    data[input.length] = 0;
+    return data;
 }
 
 func c_style_strlen(input: c_string) -> int64 {
-	var cursor = input;
-	while <<cursor != 0 {
-		cursor = cursor + 1;
-	}
+    var cursor = input;
+    while <<cursor != 0 {
+        cursor = cursor + 1;
+    }
     
-	return cast(int64) (cursor - input);
+    return cast(int64) (cursor - input);
 }
 
 func to_string(input: c_string) -> string {
-	var s: string;
-	s.data   = input;
-	s.length = c_style_strlen(input);
-	return s;
+    var s: string;
+    s.data   = input;
+    s.length = c_style_strlen(input);
+    return s;
 }
 
 func split(input: string, delim: uint8) -> [] string {
-	var start = 0;
-	var cursor = 0;
+    var start = 0;
+    var cursor = 0;
     
-	var output: [..] string;
+    var output: [..] string;
     
-	while cursor < input.length {
-		if input[cursor] == delim {
-			var o: string;
-			o.data = input.data + start;
-			o.length = cursor - start;
-			array_add(*output, o);
+    while cursor < input.length {
+        if input[cursor] == delim {
+            var o: string;
+            o.data = input.data + start;
+            o.length = cursor - start;
+            array_add(*output, o);
             
-			start = cursor + 1;
-		}
+            start = cursor + 1;
+        }
         
-		cursor = cursor + 1;
-	}
+        cursor = cursor + 1;
+    }
     
-	var o: string;
-	o.data = input.data + start;
-	o.length = cursor - start;
-	array_add(*output, o);
+    var o: string;
+    o.data = input.data + start;
+    o.length = cursor - start;
+    array_add(*output, o);
     
-	var static: [] string;
-	static.data = output.data;
-	static.count = output.count;
-	return static;
+    var static: [] string;
+    static.data = output.data;
+    static.count = output.count;
+    return static;
 }
 
 func get_lines(input: string) -> [] string {
-	return split(input, '\n');
+    return split(input, '\n');
 }
 
 func read_entire_file(path: string) -> string {
-	// @FixMe this only works if path points to a constant string
-	var file = fopen(path.data, "rb".data);
-	if file == null return "";
+    // @FixMe this only works if path points to a constant string
+    var file = fopen(path.data, "rb".data);
+    if file == null return "";
     
-	fseek(file, 0, SEEK_END);
-	var length = ftell(file);
-	fseek(file, 0, SEEK_SET);
+    fseek(file, 0, SEEK_END);
+    var length = ftell(file);
+    fseek(file, 0, SEEK_SET);
     
-	var mem = cast(c_string) malloc(length);
-	fread(mem, 1, length, file);
-	// @TODO verify fread success
+    var mem = cast(c_string) malloc(length);
+    fread(mem, 1, length, file);
+    // @TODO verify fread success
     
-	fclose(file);
+    fclose(file);
     
-	var result: string;
-	result.data = mem;
-	result.length = length;
-	return result;
+    var result: string;
+    result.data = mem;
+    result.length = length;
+    return result;
 }
 
 // @MacOSX
