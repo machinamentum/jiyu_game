@@ -62,7 +62,7 @@ func cache_to_vertex_buffer(model: *Model) {
     glBufferSubData(GL_ARRAY_BUFFER, vert_size+normal_size, tex_size, model.tex_coords.data);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
+
     model.is_dirty = false;
 }
 
@@ -79,7 +79,7 @@ func render_model(model: *Model) {
     }
     glEnd();
     */
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, model.vbo_handle);
     glEnableVertexAttribArray(ATTRIB_POSITION);
     glEnableVertexAttribArray(ATTRIB_NORMAL);
@@ -95,4 +95,5 @@ func render_model(model: *Model) {
     
     glDisableVertexAttribArray(ATTRIB_POSITION);
     glDisableVertexAttribArray(ATTRIB_NORMAL);
+
 }

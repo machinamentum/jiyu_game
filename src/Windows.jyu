@@ -1,0 +1,7 @@
+
+typealias HMODULE = *void;
+typealias FARPROC = *void;
+
+func @c_function LoadLibraryA(lpLibFileName: c_string) -> HMODULE;
+func @c_function GetProcAddress(module: HMODULE, lpProcName: c_string) -> FARPROC;
+

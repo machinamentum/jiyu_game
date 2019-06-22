@@ -4,6 +4,7 @@
 #load "OpenGL.jyu";
 #load "LibC.jyu";
 #load "Basic.jyu";
+#load "Windows.jyu";
 
 #load "render.jyu";
 
@@ -116,13 +117,14 @@ func main() {
     let INITIAL_HEIGHT = 480;
     
     var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!".data, 0, 0);
-    
-    var renderer: Renderer;
+    glfwMakeContextCurrent(window);
+
+	init_gl_functions();
+
+	var renderer: Renderer;
     init(*renderer);
     
     var model = load_obj("monkey.obj");
-    
-    glfwMakeContextCurrent(window);
     
     glEnable(GL_DEPTH_TEST);
     

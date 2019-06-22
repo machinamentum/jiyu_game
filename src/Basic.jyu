@@ -103,21 +103,20 @@ func read_entire_file(path: string) -> string {
 
 // @MacOSX
 func get_executable_path() -> string {
-    func @c_function
-        _NSGetExecutablePath(buf: *uint8, bufsize: *uint32) -> int32;
+    //func @c_function _NSGetExecutablePath(buf: *uint8, bufsize: *uint32) -> int32;
     
     var buf: [128] uint8;
     var bufsize: uint32 = cast(uint32) buf.count;
-    var result = _NSGetExecutablePath(buf.data, *bufsize);
-    if (result != 0) return "";
+    //var result = _NSGetExecutablePath(buf.data, *bufsize);
+    //if (result != 0) return "";
     
     return copy_string(to_string(buf.data));
 }
 
 func set_working_directory(path: string) {
-    func @c_function chdir(path: c_string) -> int32; // @Unix
+    // func @c_function chdir(path: c_string) -> int32; // @Unix
     
     var c_str = to_c_string(path);
-    chdir(c_str);
+    // chdir(c_str);
     free(c_str);
 }
