@@ -4,7 +4,6 @@
 #load "OpenGL.jyu";
 #load "LibC.jyu";
 #load "Basic.jyu";
-#load "Windows.jyu";
 
 #load "render.jyu";
 
@@ -27,7 +26,7 @@ func get_int(input: string) -> int32 {
     c_str[input.length] = 0;
     
     var value = atoi(c_str.data);
-    return value; 
+    return value;
 }
 
 func load_obj(path: string) -> Model {
