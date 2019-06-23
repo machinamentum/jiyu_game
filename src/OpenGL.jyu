@@ -211,27 +211,25 @@ var glEnableVertexAttribArray : @c_function (index: GLuint) -> void;
 var glDisableVertexAttribArray: @c_function (index: GLuint) -> void;
 var glDrawArrays: @c_function (mode: GLenum, first: GLint, count: GLsizei) -> void;
 
-func get_proc(mod: HMODULE, name: string) -> *void {
+func get_proc(name: string) -> *void {
 	return glfwGetProcAddress(name.data);
 }
 
 func init_gl_functions() {
-	var gl = LoadLibraryA("opengl32.dll".data);
+	glBindVertexArray = cast(@c_function (array: GLuint) -> void) get_proc("glBindVertexArray");
+	glGenVertexArrays = cast(@c_function (n: GLsizei, arrays: *GLuint) -> void) get_proc("glGenVertexArrays");
 
-	glBindVertexArray = cast(@c_function (array: GLuint) -> void) get_proc(gl, "glBindVertexArray");
-	glGenVertexArrays = cast(@c_function (n: GLsizei, arrays: *GLuint) -> void) get_proc(gl, "glGenVertexArrays");
+	glGenBuffers = cast(@c_function (n: GLsizei, buffers: *GLuint) -> void) get_proc("glGenBuffers");
+	glBindBuffer = cast(@c_function (target: GLenum, buffer: GLuint) -> void) get_proc("glBindBuffer");
+	glBufferData = cast(@c_function (target: GLenum, size: GLsizei, data: *void, usage: GLenum) -> void) get_proc("glBufferData");
+	glBufferSubData = cast(@c_function (target: GLenum, offset: GLintptr, size: GLsizeiptr, data: *GLvoid) -> void) get_proc("glBufferSubData");
 
-	glGenBuffers = cast(@c_function (n: GLsizei, buffers: *GLuint) -> void) get_proc(gl, "glGenBuffers");
-	glBindBuffer = cast(@c_function (target: GLenum, buffer: GLuint) -> void) get_proc(gl, "glBindBuffer");
-	glBufferData = cast(@c_function (target: GLenum, size: GLsizei, data: *void, usage: GLenum) -> void) get_proc(gl, "glBufferData");
-	glBufferSubData = cast(@c_function (target: GLenum, offset: GLintptr, size: GLsizeiptr, data: *GLvoid) -> void) get_proc(gl, "glBufferSubData");
+	glVertexAttribPointer = cast(@c_function (index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid) -> void) get_proc("glVertexAttribPointer");
+	glVertexAttribIPointer = cast(@c_function (index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid) -> void) get_proc("glVertexAttribIPointer");
 
-	glVertexAttribPointer = cast(@c_function (index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid) -> void) get_proc(gl, "glVertexAttribPointer");
-	glVertexAttribIPointer = cast(@c_function (index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid) -> void) get_proc(gl, "glVertexAttribIPointer");
-
-	glEnableVertexAttribArray = cast(@c_function (index: GLuint) -> void) get_proc(gl, "glEnableVertexAttribArray");
-	glDisableVertexAttribArray = cast(@c_function (index: GLuint) -> void) get_proc(gl, "glDisableVertexAttribArray");
-	glDrawArrays = cast(@c_function (mode: GLenum, first: GLint, count: GLsizei) -> void) get_proc(gl, "glDrawArrays");
+	glEnableVertexAttribArray = cast(@c_function (index: GLuint) -> void) get_proc("glEnableVertexAttribArray");
+	glDisableVertexAttribArray = cast(@c_function (index: GLuint) -> void) get_proc("glDisableVertexAttribArray");
+	glDrawArrays = cast(@c_function (mode: GLenum, first: GLint, count: GLsizei) -> void) get_proc("glDrawArrays");
 	
 
 	printf("GL: %p\n".data, glBindVertexArray);

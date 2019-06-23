@@ -102,40 +102,40 @@ func read_entire_file(path: string) -> string {
 }
 
 #if os(Windows) {
-	#load "Windows.jyu";
+    #load "Windows.jyu";
 
-	func get_executable_path() -> string {
-		var buf: [512] uint8;
+    func get_executable_path() -> string {
+        var buf: [512] uint8;
 
-		var module = GetModuleHandleA(null);
-		GetModuleFileNameA(module, buf.data, cast(DWORD) buf.count);
-		return copy_string(to_string(buf.data));
-	}
+        var module = GetModuleHandleA(null);
+        GetModuleFileNameA(module, buf.data, cast(DWORD) buf.count);
+        return copy_string(to_string(buf.data));
+    }
 
-	func set_working_directory(path: string) {
-		var c_str = to_c_string(path);
-		SetCurrentDirectoryA(c_str);
-		free(c_str);
-	}
+    func set_working_directory(path: string) {
+        var c_str = to_c_string(path);
+        SetCurrentDirectoryA(c_str);
+        free(c_str);
+    }
 }
 
 #if os(MacOSX) {
-	func get_executable_path() -> string {
- 	   func @c_function _NSGetExecutablePath(buf: *uint8, bufsize: *uint32) -> int32;
+    func get_executable_path() -> string {
+        func @c_function _NSGetExecutablePath(buf: *uint8, bufsize: *uint32) -> int32;
     
- 	   var buf: [512] uint8;
- 	   var bufsize: uint32 = cast(uint32) buf.count;
- 	   var result = _NSGetExecutablePath(buf.data, *bufsize);
-  	  if (result != 0) return "";
+        var buf: [512] uint8;
+        var bufsize: uint32 = cast(uint32) buf.count;
+        var result = _NSGetExecutablePath(buf.data, *bufsize);
+        if (result != 0) return "";
     
-    	return copy_string(to_string(buf.data));
-	}
+        return copy_string(to_string(buf.data));
+    }
 
-	func set_working_directory(path: string) {
-	    func @c_function chdir(path: c_string) -> int32; // @Unix
+    func set_working_directory(path: string) {
+        func @c_function chdir(path: c_string) -> int32; // @Unix
 
-    	var c_str = to_c_string(path);
-	    chdir(c_str);
-   	 free(c_str);
-	}
+        var c_str = to_c_string(path);
+        chdir(c_str);
+        free(c_str);
+    }
 }

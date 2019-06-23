@@ -118,9 +118,9 @@ func main() {
     var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!".data, 0, 0);
     glfwMakeContextCurrent(window);
 
-	init_gl_functions();
+    init_gl_functions();
 
-	var renderer: Renderer;
+    var renderer: Renderer;
     init(*renderer);
     
     var model = load_obj("monkey.obj");

@@ -18,7 +18,7 @@ func make_directory(path: string) -> bool {
 */
 
 func make_directory(path: string) -> bool {
-	return true;
+    return true;
 }
 
 func main() {
