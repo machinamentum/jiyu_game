@@ -117,9 +117,9 @@ func main() {
     
     var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!".data, 0, 0);
     glfwMakeContextCurrent(window);
-
+    
     init_gl_functions();
-
+    
     var renderer: Renderer;
     init(*renderer);
     
@@ -135,6 +135,11 @@ func main() {
     perspective(1, width / height, 1, 1000);
     
     glMatrixMode(GL_MODELVIEW);
+    
+    var matrix = Matrix4.identity();
+    for matrix.m {
+        printf("ROW: %f %f %f %f\n".data, it[0], it[1], it[2], it[3]);
+    }
     
     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);

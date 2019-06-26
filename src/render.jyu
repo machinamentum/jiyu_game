@@ -1,4 +1,80 @@
 
+struct Matrix4 {
+    var m: [4][4] float;
+    
+    func identity() -> Matrix4 {
+        var m: Matrix4;
+        
+        m.m[0][0] = 1;
+        m.m[1][1] = 1;
+        m.m[2][2] = 1;
+        m.m[3][3] = 1;
+        
+        return m;
+    }
+    
+    func frustum(left: float, right: float, bottom: float, top: float, _near: float, _far: float) -> Matrix4 {
+        var mat: Matrix4;
+        
+        var A = (right + left) / (right - left);
+        var B = (top + bottom) / (top - bottom);
+        var C = - (_far + _near) / (_far - _near);
+        var D = - (2 * _far * _near) / (_far - _near);
+        
+        mat.m[0][0] = 2 * _near / (right - left);
+        mat.m[0][2] = A;
+        
+        mat.m[1][1] = 2 * _near / (top - bottom);
+        mat.m[1][2] = B;
+        
+        mat.m[2][2] = C;
+        mat.m[2][3] = D;
+        
+        mat.m[3][2] = -1;
+        mat.m[3][3] =  0;
+        return mat;
+    }
+    
+    func translate(v: Vector3) -> Matrix4 {
+        var mat: Matrix4;
+        
+        mat.m[0][3] = v.x;
+        mat.m[1][3] = v.y;
+        mat.m[2][3] = v.z;
+        
+        return mat;
+    }
+    
+    func multiply(left: Matrix4, right: Matrix4) -> Matrix4 {
+        var result: Matrix4;
+        
+        var mat = right;
+        var m   = left.m;
+        
+        result.m[0][0] = m[0][0] * mat.m[0][0] + m[0][1] * mat.m[1][0] + m[0][2] * mat.m[2][0] + m[0][3] * mat.m[3][0];
+        result.m[0][1] = m[0][0] * mat.m[0][1] + m[0][1] * mat.m[1][1] + m[0][2] * mat.m[2][1] + m[0][3] * mat.m[3][1];
+        result.m[0][2] = m[0][0] * mat.m[0][2] + m[0][1] * mat.m[1][2] + m[0][2] * mat.m[2][2] + m[0][3] * mat.m[3][2];
+        result.m[0][3] = m[0][0] * mat.m[0][3] + m[0][1] * mat.m[1][3] + m[0][2] * mat.m[2][3] + m[0][3] * mat.m[3][3];
+        
+        result.m[1][0] = m[1][0] * mat.m[0][0] + m[1][1] * mat.m[1][0] + m[1][2] * mat.m[2][0] + m[1][3] * mat.m[3][0];
+        result.m[1][1] = m[1][0] * mat.m[0][1] + m[1][1] * mat.m[1][1] + m[1][2] * mat.m[2][1] + m[1][3] * mat.m[3][1];
+        result.m[1][2] = m[1][0] * mat.m[0][2] + m[1][1] * mat.m[1][2] + m[1][2] * mat.m[2][2] + m[1][3] * mat.m[3][2];
+        result.m[1][3] = m[1][0] * mat.m[0][3] + m[1][1] * mat.m[1][3] + m[1][2] * mat.m[2][3] + m[1][3] * mat.m[3][3];
+        
+        result.m[2][0] = m[2][0] * mat.m[0][0] + m[2][1] * mat.m[1][0] + m[2][2] * mat.m[2][0] + m[2][3] * mat.m[3][0];
+        result.m[2][1] = m[2][0] * mat.m[0][1] + m[2][1] * mat.m[1][1] + m[2][2] * mat.m[2][1] + m[2][3] * mat.m[3][1];
+        result.m[2][2] = m[2][0] * mat.m[0][2] + m[2][1] * mat.m[1][2] + m[2][2] * mat.m[2][2] + m[2][3] * mat.m[3][2];
+        result.m[2][3] = m[2][0] * mat.m[0][3] + m[2][1] * mat.m[1][3] + m[2][2] * mat.m[2][3] + m[2][3] * mat.m[3][3];
+        
+        result.m[3][0] = m[3][0] * mat.m[0][0] + m[3][1] * mat.m[1][0] + m[3][2] * mat.m[2][0] + m[3][3] * mat.m[3][0];
+        result.m[3][1] = m[3][0] * mat.m[0][1] + m[3][1] * mat.m[1][1] + m[3][2] * mat.m[2][1] + m[3][3] * mat.m[3][1];
+        result.m[3][2] = m[3][0] * mat.m[0][2] + m[3][1] * mat.m[1][2] + m[3][2] * mat.m[2][2] + m[3][3] * mat.m[3][2];
+        result.m[3][3] = m[3][0] * mat.m[0][3] + m[3][1] * mat.m[1][3] + m[3][2] * mat.m[2][3] + m[3][3] * mat.m[3][3];
+        
+        return result;
+    }
+}
+
 struct Renderer {
     var global_vao_handle: GLuint;
     
@@ -39,6 +115,16 @@ struct Model {
     var tex_coords: [..] Vector3;
 }
 
+struct Shader {
+    var handle: GLuint;
+}
+
+func use_shader(renderer: *Renderer, sh: *Shader) {
+    glUseProgram(sh.handle);
+    
+    
+}
+
 func cache_to_vertex_buffer(model: *Model) {
     if model.vbo_handle == 0 {
         glGenBuffers(1, *model.vbo_handle);
@@ -62,7 +148,7 @@ func cache_to_vertex_buffer(model: *Model) {
     glBufferSubData(GL_ARRAY_BUFFER, vert_size+normal_size, tex_size, model.tex_coords.data);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+    
     model.is_dirty = false;
 }
 
@@ -79,7 +165,7 @@ func render_model(model: *Model) {
     }
     glEnd();
     */
-
+    
     glBindBuffer(GL_ARRAY_BUFFER, model.vbo_handle);
     glEnableVertexAttribArray(ATTRIB_POSITION);
     glEnableVertexAttribArray(ATTRIB_NORMAL);
@@ -95,5 +181,5 @@ func render_model(model: *Model) {
     
     glDisableVertexAttribArray(ATTRIB_POSITION);
     glDisableVertexAttribArray(ATTRIB_NORMAL);
-
+    
 }
