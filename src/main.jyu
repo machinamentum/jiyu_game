@@ -146,7 +146,7 @@ func main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         glLoadIdentity();
-        glTranslatef(0, 0, -3);
+        glTranslatef(0, 0, -5);
         // glRotatef(n, 0, 1, 0);
         
         render_model(*model);

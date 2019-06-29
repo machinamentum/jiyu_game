@@ -20,6 +20,8 @@ typealias GLdouble   = double;
 typealias GLclampd   = double;
 typealias GLvoid     = void;
 
+typealias GLchar     = uint8;
+
 let GL_FALSE: GLboolean = 0;
 let GL_TRUE : GLboolean = 1;
 
@@ -175,6 +177,91 @@ let GL_SRC2_RGB                             : GLenum = 0x8582;
 let GL_SRC0_ALPHA                           : GLenum = 0x8588;
 let GL_SRC2_ALPHA                           : GLenum = 0x858A;
 
+let GL_BLEND_EQUATION_RGB             : GLenum = 0x8009;
+let GL_VERTEX_ATTRIB_ARRAY_ENABLED    : GLenum = 0x8622;
+let GL_VERTEX_ATTRIB_ARRAY_SIZE       : GLenum = 0x8623;
+let GL_VERTEX_ATTRIB_ARRAY_STRIDE     : GLenum = 0x8624;
+let GL_VERTEX_ATTRIB_ARRAY_TYPE       : GLenum = 0x8625;
+let GL_CURRENT_VERTEX_ATTRIB          : GLenum = 0x8626;
+let GL_VERTEX_PROGRAM_POINT_SIZE      : GLenum = 0x8642;
+let GL_VERTEX_ATTRIB_ARRAY_POINTER    : GLenum = 0x8645;
+let GL_STENCIL_BACK_FUNC              : GLenum = 0x8800;
+let GL_STENCIL_BACK_FAIL              : GLenum = 0x8801;
+let GL_STENCIL_BACK_PASS_DEPTH_FAIL   : GLenum = 0x8802;
+let GL_STENCIL_BACK_PASS_DEPTH_PASS   : GLenum = 0x8803;
+let GL_MAX_DRAW_BUFFERS               : GLenum = 0x8824;
+let GL_DRAW_BUFFER0                   : GLenum = 0x8825;
+let GL_DRAW_BUFFER1                   : GLenum = 0x8826;
+let GL_DRAW_BUFFER2                   : GLenum = 0x8827;
+let GL_DRAW_BUFFER3                   : GLenum = 0x8828;
+let GL_DRAW_BUFFER4                   : GLenum = 0x8829;
+let GL_DRAW_BUFFER5                   : GLenum = 0x882A;
+let GL_DRAW_BUFFER6                   : GLenum = 0x882B;
+let GL_DRAW_BUFFER7                   : GLenum = 0x882C;
+let GL_DRAW_BUFFER8                   : GLenum = 0x882D;
+let GL_DRAW_BUFFER9                   : GLenum = 0x882E;
+let GL_DRAW_BUFFER10                  : GLenum = 0x882F;
+let GL_DRAW_BUFFER11                  : GLenum = 0x8830;
+let GL_DRAW_BUFFER12                  : GLenum = 0x8831;
+let GL_DRAW_BUFFER13                  : GLenum = 0x8832;
+let GL_DRAW_BUFFER14                  : GLenum = 0x8833;
+let GL_DRAW_BUFFER15                  : GLenum = 0x8834;
+let GL_BLEND_EQUATION_ALPHA           : GLenum = 0x883D;
+let GL_MAX_VERTEX_ATTRIBS             : GLenum = 0x8869;
+let GL_VERTEX_ATTRIB_ARRAY_NORMALIZED : GLenum = 0x886A;
+let GL_MAX_TEXTURE_IMAGE_UNITS        : GLenum = 0x8872;
+let GL_FRAGMENT_SHADER                : GLenum = 0x8B30;
+let GL_VERTEX_SHADER                  : GLenum = 0x8B31;
+let GL_MAX_FRAGMENT_UNIFORM_COMPONENTS : GLenum = 0x8B49;
+let GL_MAX_VERTEX_UNIFORM_COMPONENTS  : GLenum = 0x8B4A;
+let GL_MAX_VARYING_FLOATS             : GLenum = 0x8B4B;
+let GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS : GLenum = 0x8B4C;
+let GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS : GLenum = 0x8B4D;
+let GL_SHADER_TYPE                    : GLenum = 0x8B4F;
+let GL_FLOAT_VEC2                     : GLenum = 0x8B50;
+let GL_FLOAT_VEC3                     : GLenum = 0x8B51;
+let GL_FLOAT_VEC4                     : GLenum = 0x8B52;
+let GL_INT_VEC2                       : GLenum = 0x8B53;
+let GL_INT_VEC3                       : GLenum = 0x8B54;
+let GL_INT_VEC4                       : GLenum = 0x8B55;
+let GL_BOOL                           : GLenum = 0x8B56;
+let GL_BOOL_VEC2                      : GLenum = 0x8B57;
+let GL_BOOL_VEC3                      : GLenum = 0x8B58;
+let GL_BOOL_VEC4                      : GLenum = 0x8B59;
+let GL_FLOAT_MAT2                     : GLenum = 0x8B5A;
+let GL_FLOAT_MAT3                     : GLenum = 0x8B5B;
+let GL_FLOAT_MAT4                     : GLenum = 0x8B5C;
+let GL_SAMPLER_1D                     : GLenum = 0x8B5D;
+let GL_SAMPLER_2D                     : GLenum = 0x8B5E;
+let GL_SAMPLER_3D                     : GLenum = 0x8B5F;
+let GL_SAMPLER_CUBE                   : GLenum = 0x8B60;
+let GL_SAMPLER_1D_SHADOW              : GLenum = 0x8B61;
+let GL_SAMPLER_2D_SHADOW              : GLenum = 0x8B62;
+let GL_DELETE_STATUS                  : GLenum = 0x8B80;
+let GL_COMPILE_STATUS                 : GLenum = 0x8B81;
+let GL_LINK_STATUS                    : GLenum = 0x8B82;
+let GL_VALIDATE_STATUS                : GLenum = 0x8B83;
+let GL_INFO_LOG_LENGTH                : GLenum = 0x8B84;
+let GL_ATTACHED_SHADERS               : GLenum = 0x8B85;
+let GL_ACTIVE_UNIFORMS                : GLenum = 0x8B86;
+let GL_ACTIVE_UNIFORM_MAX_LENGTH      : GLenum = 0x8B87;
+let GL_SHADER_SOURCE_LENGTH           : GLenum = 0x8B88;
+let GL_ACTIVE_ATTRIBUTES              : GLenum = 0x8B89;
+let GL_ACTIVE_ATTRIBUTE_MAX_LENGTH    : GLenum = 0x8B8A;
+let GL_FRAGMENT_SHADER_DERIVATIVE_HINT : GLenum = 0x8B8B;
+let GL_SHADING_LANGUAGE_VERSION       : GLenum = 0x8B8C;
+let GL_CURRENT_PROGRAM                : GLenum = 0x8B8D;
+let GL_POINT_SPRITE_COORD_ORIGIN      : GLenum = 0x8CA0;
+let GL_LOWER_LEFT                     : GLenum = 0x8CA1;
+let GL_UPPER_LEFT                     : GLenum = 0x8CA2;
+let GL_STENCIL_BACK_REF               : GLenum = 0x8CA3;
+let GL_STENCIL_BACK_VALUE_MASK        : GLenum = 0x8CA4;
+let GL_STENCIL_BACK_WRITEMASK         : GLenum = 0x8CA5;
+let GL_VERTEX_PROGRAM_TWO_SIDE        : GLenum = 0x8643;
+let GL_POINT_SPRITE                   : GLenum = 0x8861;
+let GL_COORD_REPLACE                  : GLenum = 0x8862;
+let GL_MAX_TEXTURE_COORDS             : GLenum = 0x8871;
+
 func @c_function glEnable(cap: GLenum);
 
 func @c_function glBegin(mode: GLenum);
@@ -213,29 +300,49 @@ var glDrawArrays: @c_function (mode: GLenum, first: GLint, count: GLsizei) -> vo
 
 var glUseProgram: @c_function (handle: GLuint) -> void;
 
+var glCreateShader: (shaderType: GLenum) -> GLuint;
+var glShaderSource: (shader: GLuint, count: GLsizei, _string: **GLchar, length: *GLint) -> void;
+var glCompileShader: (shader: GLuint) -> void;
+var glGetShaderiv: (shader: GLuint, pname: GLenum, params: *GLint) -> void;
+var glDeleteShader: (shader: GLuint) -> void;
+var glGetShaderInfoLog: (shader: GLuint, maxLength: GLsizei, length: *GLsizei, infoLog: *GLchar) -> void;
+var glCreateProgram: () -> GLuint;
+var glAttachShader: (program: GLuint, shader: GLuint) -> void;
+var glDetachShader: (program: GLuint, shader: GLuint) -> void;
+var glLinkProgram: (program: GLuint) -> void;
+var glGetProgramiv: (program: GLuint, pname: GLenum, params: *GLint) -> void;
+var glDeleteProgram: (program: GLuint) -> void;
+var glGetProgramInfoLog: (program: GLuint, maxLength: GLsizei, length: *GLsizei, infoLog: *GLchar) -> void;
+
 func get_proc(name: string) -> *void {
     return glfwGetProcAddress(name.data);
 }
 
 func init_gl_functions() {
-    glBindVertexArray = cast(@c_function (array: GLuint) -> void) get_proc("glBindVertexArray");
-    glGenVertexArrays = cast(@c_function (n: GLsizei, arrays: *GLuint) -> void) get_proc("glGenVertexArrays");
-    
-    glGenBuffers = cast(@c_function (n: GLsizei, buffers: *GLuint) -> void) get_proc("glGenBuffers");
-    glBindBuffer = cast(@c_function (target: GLenum, buffer: GLuint) -> void) get_proc("glBindBuffer");
-    glBufferData = cast(@c_function (target: GLenum, size: GLsizei, data: *void, usage: GLenum) -> void) get_proc("glBufferData");
-    glBufferSubData = cast(@c_function (target: GLenum, offset: GLintptr, size: GLsizeiptr, data: *GLvoid) -> void) get_proc("glBufferSubData");
-    
-    glVertexAttribPointer = cast(@c_function (index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid) -> void) get_proc("glVertexAttribPointer");
-    glVertexAttribIPointer = cast(@c_function (index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *GLvoid) -> void) get_proc("glVertexAttribIPointer");
-    
-    glEnableVertexAttribArray = cast(@c_function (index: GLuint) -> void) get_proc("glEnableVertexAttribArray");
-    glDisableVertexAttribArray = cast(@c_function (index: GLuint) -> void) get_proc("glDisableVertexAttribArray");
-    glDrawArrays = cast(@c_function (mode: GLenum, first: GLint, count: GLsizei) -> void) get_proc("glDrawArrays");
-    
-    glUseProgram = cast(@c_function (program: GLuint) -> void) get_proc("glUseProgram");
-    
-    
-    printf("GL: %p\n".data, glBindVertexArray);
-    printf("GL: %p\n".data, glGenVertexArrays);
+    glBindVertexArray          = cast() get_proc("glBindVertexArray");
+    glGenVertexArrays          = cast() get_proc("glGenVertexArrays");
+    glGenBuffers               = cast() get_proc("glGenBuffers");
+    glBindBuffer               = cast() get_proc("glBindBuffer");
+    glBufferData               = cast() get_proc("glBufferData");
+    glBufferSubData            = cast() get_proc("glBufferSubData");
+    glVertexAttribPointer      = cast() get_proc("glVertexAttribPointer");
+    glVertexAttribIPointer     = cast() get_proc("glVertexAttribIPointer");
+    glEnableVertexAttribArray  = cast() get_proc("glEnableVertexAttribArray");
+    glDisableVertexAttribArray = cast() get_proc("glDisableVertexAttribArray");
+    glDrawArrays               = cast() get_proc("glDrawArrays");
+    glUseProgram               = cast() get_proc("glUseProgram");
+    glCreateShader             = cast() get_proc("glCreateShader");
+    glShaderSource             = cast() get_proc("glShaderSource");
+    glCompileShader            = cast() get_proc("glCompileShader");
+    glGetShaderiv              = cast() get_proc("glGetShaderiv");
+    glDeleteShader             = cast() get_proc("glDeleteShader");
+    glGetShaderInfoLog         = cast() get_proc("glGetShaderInfoLog");
+    glCreateProgram            = cast() get_proc("glCreateProgram");
+    glAttachShader             = cast() get_proc("glAttachShader");
+    glDetachShader             = cast() get_proc("glDetachShader");
+    glLinkProgram              = cast() get_proc("glLinkProgram");
+    glGetProgramiv             = cast() get_proc("glGetProgramiv");
+    glDeleteProgram            = cast() get_proc("glDeleteProgram");
+    glGetProgramInfoLog        = cast() get_proc("glGetProgramInfoLog");
 }
+

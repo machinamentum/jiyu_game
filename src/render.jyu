@@ -78,7 +78,8 @@ struct Matrix4 {
 struct Renderer {
     var global_vao_handle: GLuint;
     
-    
+    var perspective_matrix: Matrix4;
+    var view_matrix: Matrix4;
 }
 
 func init(renderer: *Renderer) {
@@ -123,6 +124,77 @@ func use_shader(renderer: *Renderer, sh: *Shader) {
     glUseProgram(sh.handle);
     
     
+}
+
+func compile_shader_source(_source: string, type: GLenum) -> GLuint {
+    var source = _source;
+
+    var v = glCreateShader(type);
+
+    var length: GLint = cast(GLint) source.length;
+    glShaderSource(v, 1, *source.data, *length);
+    glCompileShader(v);
+
+    var status: GLint;
+    glGetShaderiv(v, GL_COMPILE_STATUS, *status);
+
+    if status == cast(GLint) GL_FALSE {
+        var len: GLint;
+        glGetShaderiv(v, GL_INFO_LOG_LENGTH, *len);
+        var buf = cast(*uint8) malloc(len);
+
+        glGetShaderInfoLog(v, len, *len, buf);
+        printf("ERROR: %.*s\n".data, len, buf);
+
+        free(buf);
+
+        glDeleteShader(v);
+        return 0;
+    }
+
+    return v;
+}
+
+func compile_shader (vertex: string, pixel: string) -> Shader {
+    var vert = compile_shader_source(vertex, GL_VERTEX_SHADER);
+    var frag = compile_shader_source(pixel,  GL_FRAGMENT_SHADER);
+    
+    var out: Shader;
+
+    if vert == 0 || frag == 0 {
+        glDeleteShader(vert);
+        glDeleteShader(frag);
+        return out;
+    }
+
+    var program = glCreateProgram();
+    glAttachShader(program, vert);
+    glAttachShader(program, frag);
+    glLinkProgram(program);
+
+    var status: GLint;
+    glGetProgramiv(program, GL_LINK_STATUS, *status);
+    if (status == cast(GLint) GL_FALSE) {
+        var len: GLint;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, *len);
+        var buf = cast(*uint8) malloc(len);
+        glGetProgramInfoLog(program, cast() len, cast() *len, buf);
+        printf("ERROR: %.*s\n".data, len, buf);
+        free(buf);
+
+        glDeleteProgram(program);
+        glDeleteShader(vert);
+        glDeleteShader(frag);
+
+        out.handle = 0;
+        return out;
+    }
+
+    glDetachShader(program, vert);
+    glDetachShader(program, frag);
+
+    out.handle = program;
+    return out;
 }
 
 func cache_to_vertex_buffer(model: *Model) {
@@ -181,5 +253,4 @@ func render_model(model: *Model) {
     
     glDisableVertexAttribArray(ATTRIB_POSITION);
     glDisableVertexAttribArray(ATTRIB_NORMAL);
-    
 }
