@@ -313,6 +313,9 @@ var glLinkProgram: (program: GLuint) -> void;
 var glGetProgramiv: (program: GLuint, pname: GLenum, params: *GLint) -> void;
 var glDeleteProgram: (program: GLuint) -> void;
 var glGetProgramInfoLog: (program: GLuint, maxLength: GLsizei, length: *GLsizei, infoLog: *GLchar) -> void;
+var glGetUniformLocation: (program: GLuint, name: *GLchar) -> GLint;
+var glUniformMatrix4fv: (location: GLint, count: GLsizei, transpose: GLboolean, value: *GLfloat) -> void;
+
 
 func get_proc(name: string) -> *void {
     return glfwGetProcAddress(name.data);
@@ -344,5 +347,7 @@ func init_gl_functions() {
     glGetProgramiv             = cast() get_proc("glGetProgramiv");
     glDeleteProgram            = cast() get_proc("glDeleteProgram");
     glGetProgramInfoLog        = cast() get_proc("glGetProgramInfoLog");
+    glGetUniformLocation       = cast() get_proc("glGetUniformLocation");
+    glUniformMatrix4fv         = cast() get_proc("glUniformMatrix4fv");
 }
 

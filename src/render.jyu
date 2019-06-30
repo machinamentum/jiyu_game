@@ -14,7 +14,7 @@ struct Matrix4 {
     }
     
     func frustum(left: float, right: float, bottom: float, top: float, _near: float, _far: float) -> Matrix4 {
-        var mat: Matrix4;
+        var mat: Matrix4 = identity();
         
         var A = (right + left) / (right - left);
         var B = (top + bottom) / (top - bottom);
@@ -35,8 +35,18 @@ struct Matrix4 {
         return mat;
     }
     
+    let DEGREES_TO_RADIANS: float = 0.0174533;
+    
+    func perspective(fov: float, aspect: float, near: float, far: float) -> Matrix4 {
+        var t = cast(float) tan(DEGREES_TO_RADIANS * fov / 2.0) * near;
+        var b = -t;
+        var l = aspect * b;
+        var r = aspect * t;
+        return frustum(l, r, b, t, near, far);
+    }
+    
     func translate(v: Vector3) -> Matrix4 {
-        var mat: Matrix4;
+        var mat: Matrix4 = identity();
         
         mat.m[0][3] = v.x;
         mat.m[1][3] = v.y;
@@ -78,7 +88,7 @@ struct Matrix4 {
 struct Renderer {
     var global_vao_handle: GLuint;
     
-    var perspective_matrix: Matrix4;
+    var projection_matrix: Matrix4;
     var view_matrix: Matrix4;
 }
 
@@ -123,35 +133,44 @@ struct Shader {
 func use_shader(renderer: *Renderer, sh: *Shader) {
     glUseProgram(sh.handle);
     
+    var proj = glGetUniformLocation(sh.handle, "projection".data);
+    var view = glGetUniformLocation(sh.handle, "view".data);
+    var model = glGetUniformLocation(sh.handle, "model".data);
     
+    glUniformMatrix4fv(proj, 1, GL_FALSE, cast() renderer.projection_matrix.m.data);
+    glUniformMatrix4fv(view, 1, GL_TRUE, cast() renderer.view_matrix.m.data);
+    
+    // @Incomplete
+    var model_matrix = Matrix4.identity();
+    glUniformMatrix4fv(model, 1, GL_TRUE, cast() model_matrix.m.data);
 }
 
 func compile_shader_source(_source: string, type: GLenum) -> GLuint {
     var source = _source;
-
+    
     var v = glCreateShader(type);
-
+    
     var length: GLint = cast(GLint) source.length;
     glShaderSource(v, 1, *source.data, *length);
     glCompileShader(v);
-
+    
     var status: GLint;
     glGetShaderiv(v, GL_COMPILE_STATUS, *status);
-
+    
     if status == cast(GLint) GL_FALSE {
         var len: GLint;
         glGetShaderiv(v, GL_INFO_LOG_LENGTH, *len);
         var buf = cast(*uint8) malloc(len);
-
+        
         glGetShaderInfoLog(v, len, *len, buf);
         printf("ERROR: %.*s\n".data, len, buf);
-
+        
         free(buf);
-
+        
         glDeleteShader(v);
         return 0;
     }
-
+    
     return v;
 }
 
@@ -160,18 +179,18 @@ func compile_shader (vertex: string, pixel: string) -> Shader {
     var frag = compile_shader_source(pixel,  GL_FRAGMENT_SHADER);
     
     var out: Shader;
-
+    
     if vert == 0 || frag == 0 {
         glDeleteShader(vert);
         glDeleteShader(frag);
         return out;
     }
-
+    
     var program = glCreateProgram();
     glAttachShader(program, vert);
     glAttachShader(program, frag);
     glLinkProgram(program);
-
+    
     var status: GLint;
     glGetProgramiv(program, GL_LINK_STATUS, *status);
     if (status == cast(GLint) GL_FALSE) {
@@ -181,18 +200,18 @@ func compile_shader (vertex: string, pixel: string) -> Shader {
         glGetProgramInfoLog(program, cast() len, cast() *len, buf);
         printf("ERROR: %.*s\n".data, len, buf);
         free(buf);
-
+        
         glDeleteProgram(program);
         glDeleteShader(vert);
         glDeleteShader(frag);
-
+        
         out.handle = 0;
         return out;
     }
-
+    
     glDetachShader(program, vert);
     glDetachShader(program, frag);
-
+    
     out.handle = program;
     return out;
 }
@@ -230,10 +249,10 @@ func render_model(model: *Model) {
     /*
     glBegin(GL_TRIANGLES);
     for 0..model.vertices.count-1 {
-        var v = model.vertices[it];
-        var n = model.normals[it];
-        glVertex3f(v.x, v.y, v.z);
-        glNormal3f(n.x, n.y, n.z);
+    var v = model.vertices[it];
+    var n = model.normals[it];
+    glVertex3f(v.x, v.y, v.z);
+    glNormal3f(n.x, n.y, n.z);
     }
     glEnd();
     */

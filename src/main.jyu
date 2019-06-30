@@ -123,7 +123,11 @@ func main() {
     var renderer: Renderer;
     init(*renderer);
     
-    var model = load_obj("monkey.obj");
+    var model = load_obj("data/models/monkey.obj");
+    
+    var vertex_source   = read_entire_file("data/shaders/basic_vertex.glsl");
+    var fragment_source = read_entire_file("data/shaders/basic_fragment.glsl");
+    var shader = compile_shader(vertex_source, fragment_source);
     
     glEnable(GL_DEPTH_TEST);
     
@@ -132,22 +136,18 @@ func main() {
     
     var width: float = INITIAL_WIDTH;
     var height: float = INITIAL_HEIGHT;
-    perspective(1, width / height, 1, 1000);
     
-    glMatrixMode(GL_MODELVIEW);
     
-    var matrix = Matrix4.identity();
-    for matrix.m {
-        printf("ROW: %f %f %f %f\n".data, it[0], it[1], it[2], it[3]);
-    }
+    
+    renderer.projection_matrix = Matrix4.perspective(90, width / height, 1, 1000);
     
     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        glLoadIdentity();
-        glTranslatef(0, 0, -5);
-        // glRotatef(n, 0, 1, 0);
+        renderer.view_matrix = Matrix4.translate(make_Vector3(0, 0, -5));
+        
+        use_shader(*renderer, *shader);
         
         render_model(*model);
         
