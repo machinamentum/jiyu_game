@@ -21,7 +21,7 @@ func make_directory(path: string) -> bool {
     return true;
 }
 
-func main() {
+func @metaprogram main() {
     var compiler = create_compiler_instance();
     
     make_directory("run_tree"); // @FixMe this requires we run build.jyu from the directory it is located in, we need a #filepath mechanism

@@ -3,5 +3,5 @@ Game programming stuff being written in an experimental programming language. Se
 
 ## Build
 ```
-jiyu -meta build.jyu
+jiyu build.jyu
 ```
