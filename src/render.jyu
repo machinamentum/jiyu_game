@@ -13,6 +13,20 @@ struct Matrix4 {
         return m;
     }
     
+    func ortho(left: float, right: float, bottom: float, top: float, near: float, far: float) -> Matrix4 {
+        var mat: Matrix4 = identity();
+        mat.m[0][0] = 2.0 / (right - left);
+        mat.m[1][1] = 2.0 / (top - bottom);
+        
+        // @FixMe wtf? The negate here is causing an "expression on lhs of '=' must be an lvalue." error here.
+        mat.m[2][2] = 2.0 / (far - near);
+        
+        mat.m[0][3] = -(right + left) / (right - left);
+        mat.m[1][3] = -(top + bottom) / (top - bottom);
+        mat.m[2][3] = -(far + near) / (far - near);
+        return mat;
+    }
+    
     func frustum(left: float, right: float, bottom: float, top: float, _near: float, _far: float) -> Matrix4 {
         var mat: Matrix4 = identity();
         
