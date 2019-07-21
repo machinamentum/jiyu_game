@@ -125,8 +125,8 @@ func main() {
     
     var model = load_obj("data/models/monkey.obj");
     
-    var vertex_source   = read_entire_file("data/shaders/basic_vertex.glsl");
-    var fragment_source = read_entire_file("data/shaders/basic_fragment.glsl");
+    var vertex_source   = read_entire_file("data/shaders/basic_light_vertex.glsl");
+    var fragment_source = read_entire_file("data/shaders/basic_light_fragment.glsl");
     var shader = compile_shader(vertex_source, fragment_source);
     
     glEnable(GL_DEPTH_TEST);
@@ -140,6 +140,11 @@ func main() {
     
     
     renderer.projection_matrix = Matrix4.perspective(90, width / height, 1, 1000);
+    
+    var light: Light;
+    light.position = make_Vector3(10, 10, 10);
+    
+    array_add(*renderer.lights, light);
     
     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);

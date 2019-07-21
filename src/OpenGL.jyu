@@ -315,6 +315,7 @@ var glDeleteProgram: (program: GLuint) -> void;
 var glGetProgramInfoLog: (program: GLuint, maxLength: GLsizei, length: *GLsizei, infoLog: *GLchar) -> void;
 var glGetUniformLocation: (program: GLuint, name: *GLchar) -> GLint;
 var glUniformMatrix4fv: (location: GLint, count: GLsizei, transpose: GLboolean, value: *GLfloat) -> void;
+var glUniform3fv: (location: GLint, count: GLsizei, value: *GLfloat) -> void;
 
 
 func get_proc(name: string) -> *void {
@@ -349,5 +350,6 @@ func init_gl_functions() {
     glGetProgramInfoLog        = cast() get_proc("glGetProgramInfoLog");
     glGetUniformLocation       = cast() get_proc("glGetUniformLocation");
     glUniformMatrix4fv         = cast() get_proc("glUniformMatrix4fv");
+    glUniform3fv               = cast() get_proc("glUniform3fv");
 }
 
