@@ -167,9 +167,6 @@ func use_shader(renderer: *Renderer, sh: *Shader) {
         // @Incomplete
         var position = glGetUniformLocation(sh.handle, "lights[0].position".data);
         
-        // @FixMe Type not printed in error:
-        // glUniform3fv(position, 1, *light.position); // (Wanted *float, Given *).
-        
         glUniform3fv(position, 1, cast(*GLfloat) *light.position);
     }
 }
