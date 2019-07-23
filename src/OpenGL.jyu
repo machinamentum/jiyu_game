@@ -1,6 +1,6 @@
 
 #if os(Windows) {
-    
+    library "opengl32";
 }
 
 #if os(Linux) {

@@ -1,6 +1,7 @@
 
 #if os(Windows) {
-    
+    library "msvcrt";
+    library "legacy_stdio_definitions";
 } else {
     library "c";
 }

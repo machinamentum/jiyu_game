@@ -1,5 +1,12 @@
 
-library "glfw";
+#if os(Windows) {
+	library "shell32";
+	library "gdi32";
+    library "user32";
+	library "glfw3";
+} else {
+	library "glfw";
+}
 
 func @c_function glfwInit();
 func @c_function glfwCreateWindow(width: int32, height: int32, title: *uint8, unk: int64, unk1: int64) -> *void;
