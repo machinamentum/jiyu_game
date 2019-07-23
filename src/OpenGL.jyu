@@ -1,4 +1,16 @@
 
+#if os(Windows) {
+    
+}
+
+#if os(Linux) {
+    
+}
+
+#if os(MacOSX) {
+    framework "OpenGL";
+}
+
 typealias ptrdiff_t  = int64; // @FixMe this doesnt belong here and Idk if it is correct.
 
 typealias GLintptr   = ptrdiff_t;
