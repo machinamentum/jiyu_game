@@ -1,8 +1,8 @@
 
-#load "src/Compiler.jyu";
-#load "src/LibC.jyu";
-#load "src/Array.jyu";
-#load "src/Basic.jyu";
+#import "Compiler";
+#import "LibC";
+#import "Array";
+#import "Basic";
 
 /*
 func make_directory(path: string) -> bool {

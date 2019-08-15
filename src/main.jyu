@@ -1,9 +1,9 @@
 
-#load "Array.jyu";
-#load "GLFW.jyu";
-#load "OpenGL.jyu";
-#load "LibC.jyu";
-#load "Basic.jyu";
+#import "Array";
+#import "GLFW";
+#import "OpenGL";
+#import "LibC";
+#import "Basic";
 
 #load "render.jyu";
 
