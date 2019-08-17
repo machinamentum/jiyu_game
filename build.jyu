@@ -22,10 +22,11 @@ func make_directory(path: string) -> bool {
 }
 
 func @metaprogram main() {
-    var compiler = create_compiler_instance();
+    var options: Build_Options;
+    options.executable_name = "run_tree/game";
+    var compiler = create_compiler_instance(*options);
     
     make_directory("run_tree"); // @FixMe this requires we run build.jyu from the directory it is located in, we need a #filepath mechanism
-    compiler.executable_name = "run_tree/game";
     
     if compiler_load_file(compiler, "src/main.jyu") != true return;
     if compiler_typecheck_program(compiler) != true return;
