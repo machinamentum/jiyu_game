@@ -99,9 +99,24 @@ func load_obj(path: string) -> Model {
     return model;
 }
 
-func main() {
-    var exe_path = get_executable_path();
-    set_working_directory(basename(exe_path));
+func main(argc: int32, argv: **uint8) {
+
+    var is_run_as_metaprogram = false;
+    for 0..argc-1 {
+        var s: string;
+        s.data = argv[it];
+        s.length = cast() strlen(s.data);
+
+        if s == "meta" {
+            is_run_as_metaprogram = true;
+        }
+    }
+
+    // If we're run as a metaprogram, assume build.jyu has changed directory to the run_tree.
+    if is_run_as_metaprogram == false {
+        var exe_path = get_executable_path();
+        set_working_directory(basename(exe_path));
+    }
     
     glfwInit();
     

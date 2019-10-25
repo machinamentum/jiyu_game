@@ -21,7 +21,20 @@ func make_directory(path: string) -> bool {
     return true;
 }
 
-func @metaprogram main() {
+func @metaprogram main(argc: int32, argv: **uint8) {
+
+    var as_metaprogram = false;
+    for 0..argc-1 {
+        var s: string;
+        s.data = argv[it];
+        s.length = cast() strlen(s.data);
+
+        if s == "meta" {
+            as_metaprogram = true;
+            printf("Running game as metaprogram.\n");
+        }
+    }
+
     var options: Build_Options;
     options.executable_name = "run_tree/game";
     var compiler = create_compiler_instance(*options);
@@ -31,6 +44,16 @@ func @metaprogram main() {
     if compiler_load_file(compiler, "src/main.jyu") != true return;
     if compiler_typecheck_program(compiler) != true return;
     if compiler_generate_llvm_module(compiler) != true return;
-    if compiler_emit_object_file(compiler) != true return;
-    if compiler_run_default_link_command(compiler) != true return;
+
+    if as_metaprogram {
+        set_working_directory("run_tree");
+
+        var args: [..] *uint8;
+        array_add(*args, "meta");
+
+        if compiler_run_metaprogram(compiler, cast() args.count, args.data) != true return;
+    } else {
+        if compiler_emit_object_file(compiler) != true return;
+        if compiler_run_default_link_command(compiler) != true return;
+    }
 }
