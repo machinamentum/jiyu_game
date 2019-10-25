@@ -105,7 +105,7 @@ func main() {
     
     glfwInit();
     
-    let INITIAL_WIDTH = 640;
+    let INITIAL_WIDTH  = 640;
     let INITIAL_HEIGHT = 480;
     
     var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!", 0, 0);
