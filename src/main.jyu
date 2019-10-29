@@ -119,6 +119,11 @@ func main(argc: int32, argv: **uint8) {
     }
     
     glfwInit();
+
+    glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, cast() GL_TRUE);
+    glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
     let INITIAL_WIDTH  = 640;
     let INITIAL_HEIGHT = 480;
@@ -151,12 +156,27 @@ func main(argc: int32, argv: **uint8) {
     light.position = make_Vector3(10, 10, 10);
     
     array_add(*renderer.lights, light);
+
+    var move: float = 0.0;
+    var change: float = 0.001;
     
     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        renderer.view_matrix = Matrix4.translate(make_Vector3(0, 0, -5));
+        renderer.view_matrix = Matrix4.translate(make_Vector3(move, 0, -5));
+
+        move += change;
+        if move > 2.0 {
+            move = 2.0;
+            change = -change;
+        }
+
+        if move < -2.0 {
+            move = -2.0;
+            change = -change;
+        }
+
         
         use_shader(*renderer, *shader);
         
