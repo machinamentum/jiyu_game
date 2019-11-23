@@ -1,0 +1,92 @@
+
+func get_float(input: string) -> float {
+    var c_str: [256] uint8;
+    if input.length >= 256 return 0;
+    
+    memcpy(c_str.data, input.data, cast(size_t) input.length);
+    c_str[input.length] = 0;
+    
+    var value = atof(c_str.data);
+    return cast(float) value; 
+}
+
+func get_int(input: string) -> int32 {
+    var c_str: [256] uint8;
+    if input.length >= 256 return 0;
+    
+    memcpy(c_str.data, input.data, cast(size_t) input.length);
+    c_str[input.length] = 0;
+    
+    var value = atoi(c_str.data);
+    return value;
+}
+
+func load_obj(path: string) -> Model {
+    var data = read_entire_file(path);
+    
+    var lines = get_lines(data);
+    var model: Model;
+    
+    var vertices:   [..] Vector3;
+    var normals:    [..] Vector3;
+    var tex_coords: [..] Vector3;
+    
+    // printf("char: %d\n".data, ' ');
+    for lines {
+        var splits = split(it, ' ');
+        
+        // printf("LINE: '%.*s'\n".data, it.length, it.data);
+        for splits {
+            // printf("SPLIT: '%.*s'\n".data, it.length, it.data);
+        }
+        
+        // @Cleanup continue keyword
+        if splits.count == 0 {
+            // do nothing
+        } else if splits[0] == "v" {
+            var x = get_float(splits[1]);
+            var y = get_float(splits[2]);
+            var z = get_float(splits[3]);
+            array_add(*vertices, make_Vector3(x, y, z));
+        } else if splits[0] == "vn" {
+            var x = get_float(splits[1]);
+            var y = get_float(splits[2]);
+            var z = get_float(splits[3]);
+            array_add(*normals, make_Vector3(x, y, z));
+        } else if splits[0] == "f" {
+            {
+                var sub = split(splits[1], '/');
+                var vi = get_int(sub[0]);
+                var ni = get_int(sub[2]);
+                array_add(*model.vertices, vertices[vi - 1]);
+                array_add(*model.normals,  normals[ni - 1]);
+            }
+            
+            {
+                var sub = split(splits[2], '/');
+                var vi = get_int(sub[0]);
+                var ni = get_int(sub[2]);
+                
+                array_add(*model.vertices, vertices[vi - 1]);
+                array_add(*model.normals,  normals[ni - 1]);
+            }
+            
+            {
+                var sub = split(splits[3], '/');
+                var vi = get_int(sub[0]);
+                var ni = get_int(sub[2]);
+                
+                array_add(*model.vertices, vertices[vi - 1]);
+                array_add(*model.normals,  normals[ni - 1]);
+            }
+        }
+    }
+    
+    free(lines.data);
+    free(data.data);
+    
+    array_reset(*vertices);
+    array_reset(*normals);
+    array_reset(*tex_coords);
+    return model;
+}

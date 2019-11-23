@@ -31,7 +31,7 @@ func @metaprogram main(argc: int32, argv: **uint8) {
 
         if s == "meta" {
             as_metaprogram = true;
-            printf("Running game as metaprogram.\n");
+            // printf("Running game as metaprogram.\n");
         }
     }
 

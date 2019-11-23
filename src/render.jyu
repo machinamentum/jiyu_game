@@ -148,7 +148,7 @@ struct Shader {
     var handle: GLuint;
 }
 
-func use_shader(renderer: *Renderer, sh: *Shader) {
+func use_shader(renderer: *Renderer, sh: *Shader, model_matrix: Matrix4) {
     glUseProgram(sh.handle);
 
     var proj  = glGetUniformLocation(sh.handle, "projection");
@@ -157,9 +157,7 @@ func use_shader(renderer: *Renderer, sh: *Shader) {
     
     glUniformMatrix4fv(proj, 1, GL_TRUE, cast() renderer.projection_matrix.m.data);
     glUniformMatrix4fv(view, 1, GL_TRUE, cast() renderer.view_matrix.m.data);
-    
-    // @Incomplete
-    var model_matrix = Matrix4.identity();
+
     glUniformMatrix4fv(model, 1, GL_TRUE, cast() model_matrix.m.data);
     
     for 0..renderer.lights.count-1 {
@@ -200,7 +198,7 @@ func compile_shader_source(_source: string, type: GLenum) -> GLuint {
     return v;
 }
 
-func compile_shader (vertex: string, pixel: string) -> Shader {
+func compile_shader(vertex: string, pixel: string) -> Shader {
     var vert = compile_shader_source(vertex, GL_VERTEX_SHADER);
     var frag = compile_shader_source(pixel,  GL_FRAGMENT_SHADER);
     
@@ -247,6 +245,7 @@ func cache_to_vertex_buffer(model: *Model) {
         glGenBuffers(1, *model.vbo_handle);
     }
     
+    // @Cleanup UnaryNot
     if model.is_dirty == false {
         return;
     }

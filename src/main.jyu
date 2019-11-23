@@ -6,97 +6,44 @@
 #import "Basic";
 
 #load "render.jyu";
+#load "obj_loader.jyu";
+// #load "NBT.jyu";
 
-func get_float(input: string) -> float {
-    var c_str: [256] uint8;
-    if input.length >= 256 return 0;
-    
-    memcpy(c_str.data, input.data, cast(size_t) input.length);
-    c_str[input.length] = 0;
-    
-    var value = atof(c_str.data);
-    return cast(float) value; 
+let COMPONENT_IS_INACTIVE: uint8 = (1 << 0);
+
+var renderer: Renderer; // maybe this should be managed in render, code outside render shouldn't see it ?
+
+var shader_default: Shader;
+
+struct Scene {
+    var root: *Entity;
 }
 
-func get_int(input: string) -> int32 {
-    var c_str: [256] uint8;
-    if input.length >= 256 return 0;
-    
-    memcpy(c_str.data, input.data, cast(size_t) input.length);
-    c_str[input.length] = 0;
-    
-    var value = atoi(c_str.data);
-    return value;
+struct Entity {
+    var children: [..] *Entity;
+
+    var position: Vector3;
+    var model: *Model;
 }
 
-func load_obj(path: string) -> Model {
-    var data = read_entire_file(path);
-    
-    var lines = get_lines(data);
-    var model: Model;
-    
-    var vertices:   [..] Vector3;
-    var normals:    [..] Vector3;
-    var tex_coords: [..] Vector3;
-    
-    // printf("char: %d\n".data, ' ');
-    for lines {
-        var splits = split(it, ' ');
-        
-        // printf("LINE: '%.*s'\n".data, it.length, it.data);
-        for splits {
-            // printf("SPLIT: '%.*s'\n".data, it.length, it.data);
+func render_entity_and_children(e: *Entity, local_to_world: Matrix4, override_shader: *Shader) {
+    if e.model {
+        var shader = *shader_default;
+        if override_shader {
+            shader = override_shader;
         }
-        
-        // @Cleanup continue keyword
-        if splits.count == 0 {
-            // do nothing
-        } else if splits[0] == "v" {
-            var x = get_float(splits[1]);
-            var y = get_float(splits[2]);
-            var z = get_float(splits[3]);
-            array_add(*vertices, make_Vector3(x, y, z));
-        } else if splits[0] == "vn" {
-            var x = get_float(splits[1]);
-            var y = get_float(splits[2]);
-            var z = get_float(splits[3]);
-            array_add(*normals, make_Vector3(x, y, z));
-        } else if splits[0] == "f" {
-            {
-                var sub = split(splits[1], '/');
-                var vi = get_int(sub[0]);
-                var ni = get_int(sub[2]);
-                array_add(*model.vertices, vertices[vi - 1]);
-                array_add(*model.normals,  normals[ni - 1]);
-            }
-            
-            {
-                var sub = split(splits[2], '/');
-                var vi = get_int(sub[0]);
-                var ni = get_int(sub[2]);
-                
-                array_add(*model.vertices, vertices[vi - 1]);
-                array_add(*model.normals,  normals[ni - 1]);
-            }
-            
-            {
-                var sub = split(splits[3], '/');
-                var vi = get_int(sub[0]);
-                var ni = get_int(sub[2]);
-                
-                array_add(*model.vertices, vertices[vi - 1]);
-                array_add(*model.normals,  normals[ni - 1]);
-            }
-        }
+
+        var local_transform = Matrix4.translate(e.position);
+        var final_transform = Matrix4.multiply(local_transform, local_to_world);
+
+        use_shader(*renderer, shader, final_transform);
+        render_model(e.model);
     }
-    
-    free(lines.data);
-    free(data.data);
-    
-    array_reset(*vertices);
-    array_reset(*normals);
-    array_reset(*tex_coords);
-    return model;
+}
+
+func render_scene(scene: Scene) {
+    var world_offset = Matrix4.identity();
+    render_entity_and_children(scene.root, world_offset, null);
 }
 
 func main(argc: int32, argv: **uint8) {
@@ -113,6 +60,7 @@ func main(argc: int32, argv: **uint8) {
     }
 
     // If we're run as a metaprogram, assume build.jyu has changed directory to the run_tree.
+    // @Cleanup UnaryNot
     if is_run_as_metaprogram == false {
         var exe_path = get_executable_path();
         set_working_directory(basename(exe_path));
@@ -131,21 +79,19 @@ func main(argc: int32, argv: **uint8) {
     var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!", 0, 0);
     glfwMakeContextCurrent(window);
     
-    init_gl_functions();
-    
-    var renderer: Renderer;
+    func get_proc(name: string) -> *void {
+        return glfwGetProcAddress(name.data);
+    }
+
+    init_gl_functions(get_proc);
+
     init(*renderer);
-    
-    var model = load_obj("data/models/monkey.obj");
-    
+
     var vertex_source   = read_entire_file("data/shaders/basic_light_vertex.glsl");
     var fragment_source = read_entire_file("data/shaders/basic_light_fragment.glsl");
-    var shader = compile_shader(vertex_source, fragment_source);
+    shader_default = compile_shader(vertex_source, fragment_source);
     
     glEnable(GL_DEPTH_TEST);
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
     
     var width: float = INITIAL_WIDTH;
     var height: float = INITIAL_HEIGHT;
@@ -159,12 +105,20 @@ func main(argc: int32, argv: **uint8) {
 
     var move: float = 0.0;
     var change: float = 0.001;
+
+    var scene: Scene;
+    
+    var root_entity: Entity;
+    var model = load_obj("data/models/monkey.obj");
+    root_entity.model = *model;
+
+    scene.root = *root_entity;
     
     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        renderer.view_matrix = Matrix4.translate(make_Vector3(move, 0, -5));
+        renderer.view_matrix = Matrix4.identity();
 
         move += change;
         if move > 2.0 {
@@ -177,10 +131,8 @@ func main(argc: int32, argv: **uint8) {
             change = -change;
         }
 
-        
-        use_shader(*renderer, *shader);
-        
-        render_model(*model);
+        root_entity.position = make_Vector3(move, 0, -5);
+        render_scene(scene);
         
         glfwSwapBuffers(window);
         glfwPollEvents();
