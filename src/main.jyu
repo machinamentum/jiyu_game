@@ -63,22 +63,28 @@ func main(argc: int32, argv: **uint8) {
     // @Cleanup UnaryNot
     if is_run_as_metaprogram == false {
         var exe_path = get_executable_path();
+        printf("Exe path: '%.*s'\n", exe_path.length, exe_path.data);
         set_working_directory(basename(exe_path));
     }
-    
-    glfwInit();
 
-    glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, cast() GL_TRUE);
-    glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    
+    if (glfwInit() == 0) return;
+
+
+//     glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
+//     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 2);
+//     glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, cast() GL_TRUE);
+//     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+
     let INITIAL_WIDTH  = 640;
     let INITIAL_HEIGHT = 480;
-    
-    var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!", 0, 0);
+
+    var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!", null, null);
     glfwMakeContextCurrent(window);
-    
+
     func get_proc(name: string) -> *void {
         return glfwGetProcAddress(name.data);
     }
@@ -90,34 +96,34 @@ func main(argc: int32, argv: **uint8) {
     var vertex_source   = read_entire_file("data/shaders/basic_light_vertex.glsl");
     var fragment_source = read_entire_file("data/shaders/basic_light_fragment.glsl");
     shader_default = compile_shader(vertex_source, fragment_source);
-    
+
     glEnable(GL_DEPTH_TEST);
-    
+
     var width: float = INITIAL_WIDTH;
     var height: float = INITIAL_HEIGHT;
 
     renderer.projection_matrix = Matrix4.perspective(90, width / height, 1, 1000);
-    
+
     var light: Light;
     light.position = make_Vector3(10, 10, 10);
-    
+
     array_add(*renderer.lights, light);
 
     var move: float = 0.0;
     var change: float = 0.001;
 
     var scene: Scene;
-    
+
     var root_entity: Entity;
     var model = load_obj("data/models/monkey.obj");
     root_entity.model = *model;
 
     scene.root = *root_entity;
-    
+
     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
+
         renderer.view_matrix = Matrix4.identity();
 
         move += change;
@@ -133,10 +139,10 @@ func main(argc: int32, argv: **uint8) {
 
         root_entity.position = make_Vector3(move, 0, -5);
         render_scene(scene);
-        
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    
+
     glfwTerminate();
 }
