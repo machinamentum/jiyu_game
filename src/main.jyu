@@ -8,6 +8,11 @@
 #load "render.jyu";
 #load "obj_loader.jyu";
 // #load "NBT.jyu";
+#load "bsp.jyu";
+
+#if os(Windows) {
+    #load "LibOVR.jyu";
+}
 
 let COMPONENT_IS_INACTIVE: uint8 = (1 << 0);
 
@@ -26,6 +31,8 @@ struct Entity {
     var model: *Model;
 }
 
+var r: float = 0.0;
+
 func render_entity_and_children(e: *Entity, local_to_world: Matrix4, override_shader: *Shader) {
     if e.model {
         var shader = *shader_default;
@@ -35,6 +42,10 @@ func render_entity_and_children(e: *Entity, local_to_world: Matrix4, override_sh
 
         var local_transform = Matrix4.translate(e.position);
         var final_transform = Matrix4.multiply(local_transform, local_to_world);
+        r += 0.0001;
+        var rot = Matrix4.rotate(make_Vector3(0, 1, 0), r);
+        final_transform = final_transform.multiply(rot);
+        final_transform = Matrix4.translate(make_Vector3(0, 0, -3)).multiply(final_transform.inverse());
 
         use_shader(*renderer, shader, final_transform);
         render_model(e.model);
@@ -47,6 +58,8 @@ func render_scene(scene: Scene) {
 }
 
 func main(argc: int32, argv: **uint8) {
+
+    // Oculus.init();
 
     var is_run_as_metaprogram = false;
     for 0..argc-1 {
@@ -69,7 +82,6 @@ func main(argc: int32, argv: **uint8) {
 
     if (glfwInit() == 0) return;
 
-
 //     glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
 //     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 2);
 //     glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, cast() GL_TRUE);
@@ -78,6 +90,7 @@ func main(argc: int32, argv: **uint8) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+
 
     let INITIAL_WIDTH  = 640;
     let INITIAL_HEIGHT = 480;
@@ -105,7 +118,7 @@ func main(argc: int32, argv: **uint8) {
     renderer.projection_matrix = Matrix4.perspective(90, width / height, 1, 1000);
 
     var light: Light;
-    light.position = make_Vector3(10, 10, 10);
+    light.position = make_Vector3(0, 1, 0);
 
     array_add(*renderer.lights, light);
 
@@ -126,7 +139,7 @@ func main(argc: int32, argv: **uint8) {
 
         renderer.view_matrix = Matrix4.identity();
 
-        move += change;
+        move += 0;
         if move > 2.0 {
             move = 2.0;
             change = -change;
@@ -137,7 +150,7 @@ func main(argc: int32, argv: **uint8) {
             change = -change;
         }
 
-        root_entity.position = make_Vector3(move, 0, -5);
+        root_entity.position = make_Vector3(move, 0, 0);
         render_scene(scene);
 
         glfwSwapBuffers(window);

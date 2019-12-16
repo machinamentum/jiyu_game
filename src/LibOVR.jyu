@@ -1,0 +1,21 @@
+
+struct Oculus {
+    library "LibOVR";
+
+    #clang_import "#include <OVR_CAPI.h>";
+
+    func ovr_logger(userData: uintptr_t, level: int32, message: *uint8) {
+        printf("OVR: %s\n", message);
+    }
+
+    func init() -> bool {
+        var init_params: ovrInitParams;
+        init_params.Flags = 0;
+        init_params.RequestedMinorVersion = 0;
+        init_params.LogCallback = cast() ovr_logger;
+        init_params.UserData = 0;
+        init_params.ConnectionTimeoutMS = 0;
+
+        var result: ovrResult = ovr_Initialize(*init_params);
+    }
+}

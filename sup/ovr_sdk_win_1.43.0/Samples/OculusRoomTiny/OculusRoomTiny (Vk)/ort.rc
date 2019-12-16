@@ -1,0 +1,3 @@
+// Custom resources
+vert spv ort.vert.spv
+frag spv ort.frag.spv
