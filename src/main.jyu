@@ -120,7 +120,7 @@ func main(argc: int32, argv: **uint8) {
     var light: Light;
     light.position = make_Vector3(0, 1, 0);
 
-    array_add(*renderer.lights, light);
+    renderer.lights.add(light);
 
     var move: float = 0.0;
     var change: float = 0.001;

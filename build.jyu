@@ -72,7 +72,7 @@ func @metaprogram main(argc: int32, argv: **uint8) {
         set_working_directory("run_tree");
 
         var args: [..] *uint8;
-        array_add(*args, "meta");
+        args.add("meta");
 
         if compiler_run_metaprogram(compiler, cast() args.count, args.data) != true return;
     } else {

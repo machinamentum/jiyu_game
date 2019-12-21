@@ -1,0 +1,65 @@
+
+#import "Array";
+
+let TAG_End        : uint8 = 0;
+let TAG_Byte       : uint8 = 1;
+let TAG_Short      : uint8 = 2;
+let TAG_Int        : uint8 = 3;
+let TAG_Long       : uint8 = 4;
+let TAG_Float      : uint8 = 5;
+let TAG_Double     : uint8 = 6;
+let TAG_Byte_Array : uint8 = 7;
+let TAG_String     : uint8 = 8;
+let TAG_List       : uint8 = 9;
+let TAG_Compound   : uint8 = 10;
+let TAG_Int_Array  : uint8 = 11;
+let TAG_Long_Array : uint8 = 12;
+
+// @TODO namespaces
+struct NBT {
+
+    struct Tag {
+        var type: uint8;
+        var name: string;
+
+        var int_value: int64;
+        var float_value: double;
+        var string_value: string;
+        var list_value: [..] Tag;
+        var int_array_value: [..] int64;
+    }
+
+    func make_tag(type: uint8, name: string) -> Tag {
+        var tag: Tag;
+        tag.type = type;
+        tag.name = name;
+        return tag;
+    }
+
+    // Parses a Tag from input and advances the input string by the number of bytes parsed.
+    // @TODO When tuples are supported, change this to return a tuple of the advanced string
+    // and the resulting tag.
+    func get_tag(input: *string) -> Tag {
+        if input.length == 0 return make_tag(TAG_End, "");
+
+        var type = << cast(*uint8) input.data;
+        advance(input, 1);
+
+        if type == TAG_End return make_tag(TAG_End, "");
+        
+        var name_length = << cast(*uint16) input.data;
+
+        if type == TAG_Byte {
+
+        }
+    }
+
+} // NBT
+
+// @TODO string_length_type
+func advance(s: *string, amount: int32) {
+    assert(s.length >= amount);
+
+    s.data += amount;
+    s.length -= amount;
+}
