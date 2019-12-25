@@ -1,6 +1,4 @@
 
-precision highp float;
-
 out vec4 fragment_color;
 
 in vec3 out_position;

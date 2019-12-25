@@ -71,7 +71,7 @@ func compile_shader_source(_source: string, type: GLenum) -> GLuint {
     #if os(MacOSX) {
         let VERSION_STRING = "#version 330 core";
     } else {
-        let VERSION_STRING = "#version 300 es";
+        let VERSION_STRING = "#version 300 es\nprecision highp float;\n";
     }
 
     source_datas.add(VERSION_STRING.data);
