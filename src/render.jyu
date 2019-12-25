@@ -64,10 +64,27 @@ func compile_shader_source(_source: string, type: GLenum) -> GLuint {
     var source = _source;
 
     var v = glCreateShader(type);
+    
+    var source_datas: [..] *uint8;
+    var source_lengths: [..] GLint;
 
-    var length: GLint = cast(GLint) source.length;
-    glShaderSource(v, 1, *source.data, *length);
+    #if os(MacOSX) {
+        let VERSION_STRING = "#version 330 core";
+    } else {
+        let VERSION_STRING = "#version 300 es";
+    }
+
+    source_datas.add(VERSION_STRING.data);
+    source_lengths.add(cast(GLint) VERSION_STRING.length);
+
+    source_datas.add(source.data);
+    source_lengths.add(cast(GLint) source.length);
+
+    glShaderSource(v, cast() source_datas.count, source_datas.data, source_lengths.data);
     glCompileShader(v);
+
+    source_datas.reset();
+    source_lengths.reset();
 
     var status: GLint;
     glGetShaderiv(v, GL_COMPILE_STATUS, *status);

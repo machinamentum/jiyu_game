@@ -1,6 +1,4 @@
 
-#version 300 es
-
 out vec4 fragment_color;
 
 in vec4 out_color;
