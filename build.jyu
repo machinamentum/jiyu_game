@@ -8,12 +8,74 @@
     let PATH_SEPERATOR = '\\';
     let OCULUS_SDK_PATH     = "sup\\ovr_sdk_win_1.43.0\\LibOVR\\Lib\\Windows\\x64\\Release\\VS2017";
     let OCULUS_INCLUDE_PATH = "sup\\ovr_sdk_win_1.43.0\\LibOVR\\Include";
+
+    #import "microsoft_craziness";
 } else {
     let PATH_SEPERATOR = '/';
 }
 
+func concat(a: string, b: string) -> string {
+    var len = a.length + b.length;
+    var o: string;
+    o.data = cast() malloc(cast(size_t) len);
+    o.length = len;
+    memcpy(o.data, a.data, cast(size_t) a.length);
+    memcpy(o.data + a.length, b.data, cast(size_t) b.length);
+    return o;
+}
+
+func wide_to_mb(wide: *wchar_t) -> string {
+    var size = wcstombs(null, wide, 0);
+    var data = cast(*uint8) malloc(size + 1);
+    wcstombs(data, wide, size+1);
+    return to_string(data);
+}
+
+func compile_c_lib(src_path: string, output_no_ext: string) {
+    #if os(Windows) {
+        var msvc: Find_Result;
+        find_visual_studio_and_windows_sdk(*msvc);
+
+        if msvc.windows_sdk_version == 0 {
+            printf("Could not find Windows Visual Studio SDK.\n");
+            return;
+        }
+
+        var exe_path = wide_to_mb(msvc.vs_exe_path);
+        var include_path = wide_to_mb(msvc.windows_sdk_include);
+        var ucrt_inc = concat(include_path, "\\ucrt");
+        var um_inc   = concat(include_path, "\\um");
+
+        var vsroot = concat(wide_to_mb(msvc.vs_library_path), "\\..\\..\\");
+
+        var cl_exe = concat(exe_path, "\\cl.exe");
+        var lib_exe = concat(exe_path, "\\lib.exe");
+
+        var args: [..] string;
+        args.add(cl_exe);
+        args.add(concat("/I", ucrt_inc));
+        args.add(concat("/I", um_inc));
+        args.add(concat("/I", concat(vsroot, "\\include")));
+        args.add(src_path);
+        args.add("/c");
+        args.add("/Fo.temp_c.obj");
+
+        run_command(get_slice(args));
+        args.reset();
+
+        args.add(lib_exe);
+        args.add(".temp_c.obj");
+        args.add(concat("/out:", concat(output_no_ext, ".lib")));
+        run_command(get_slice(args));
+        args.reset();
+    } else {
+        // @Incomplete
+    }
+}
+
 func @metaprogram main(argc: int32, argv: **uint8) {
     var as_metaprogram = false;
+    var compile_c_libs = false;
     for 0..argc-1 {
         var s: string;
         s.data = argv[it];
@@ -23,14 +85,30 @@ func @metaprogram main(argc: int32, argv: **uint8) {
             as_metaprogram = true;
             // printf("Running game as metaprogram.\n");
         }
+
+        if s == "build_libs" {
+            compile_c_libs = true;
+        }
     }
 
     var options: Build_Options;
     options.executable_name = "run_tree/game";
+//     options.emit_llvm_ir = true;
+//     options.verbose_diagnostics = true;
     var compiler = create_compiler_instance(*options);
 
     var cwd = get_working_directory();
+    compiler_add_library_search_path(compiler, concat(cwd, "/src"));
+    compiler_add_library_search_path(compiler, concat(cwd, "/run_tree"));
     compiler_add_library_search_path(compiler, cwd);
+
+    if compile_c_libs {
+        #if os(Windows) {
+            compile_c_lib("src/nuklear.c", "run_tree/nuklear");
+        } else {
+            compile_c_lib("src/nuklear.c", "run_tree/libnuklear");
+        }
+    }
     #if os(Windows) {
         var builder: String_Builder;
         builder.init();
@@ -40,7 +118,7 @@ func @metaprogram main(argc: int32, argv: **uint8) {
         builder.append(OCULUS_SDK_PATH);
 
         var path = builder.to_string();
-        printf("Oculus path: %.*s\n", path.length, path.data);
+//         printf("Oculus path: %.*s\n", path.length, path.data);
         compiler_add_library_search_path(compiler, path);
 
         free(path.data);
@@ -54,7 +132,7 @@ func @metaprogram main(argc: int32, argv: **uint8) {
         builder.append(OCULUS_INCLUDE_PATH);
 
         path = builder.to_string();
-        printf("Oculus include: %.*s\n", path.length, path.data);
+//         printf("Oculus include: %.*s\n", path.length, path.data);
         compiler_add_library_search_path(compiler, path);
 
         free(path.data);

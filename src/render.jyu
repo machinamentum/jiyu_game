@@ -1,5 +1,10 @@
 #import "Math";
 
+let ATTRIB_POSITION : GLuint = 0;
+let ATTRIB_NORMAL   : GLuint = 1;
+let ATTRIB_TEX_COORD: GLuint = 2;
+let ATTRIB_COLOR    : GLuint = 3;
+
 struct Renderer {
     var global_vao_handle: GLuint;
 
@@ -13,14 +18,34 @@ struct Light {
     var position: Vector3;
 }
 
+struct Texture {
+    var handle: GLuint;
+    var width : int;
+    var height: int;
+
+    func delete(this: *Texture) {
+        glDeleteTextures(1, *this.handle);
+        this.handle = 0;
+    }
+
+    func upload_rgba_image(data: *void, width: int, height: int) -> Texture {
+        var texture: Texture;
+        glGenTextures(1, *texture.handle);
+        glBindTexture(GL_TEXTURE_2D, texture.handle);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cast(GLsizei)width, cast(GLsizei)height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+        texture.width  = width;
+        texture.height = height;
+        return texture;
+    }
+}
+
 func init(renderer: *Renderer) {
     glGenVertexArrays(1, *renderer.global_vao_handle);
     glBindVertexArray(renderer.global_vao_handle);
 }
-
-let ATTRIB_POSITION : GLuint = 0;
-let ATTRIB_NORMAL   : GLuint = 1;
-let ATTRIB_TEX_COORD: GLuint = 2;
 
 func make_Vector3(x: float, y: float, z: float) -> Vector3 {
     return Vector3.make(x, y, z);
@@ -60,11 +85,16 @@ func use_shader(renderer: *Renderer, sh: *Shader, model_matrix: Matrix4) {
     }
 }
 
+func use_texture(sh: *Shader, texture: *Texture) {
+    var tex = glGetUniformLocation(sh.handle, "color_texture");
+    glUniform1i(tex, 0);
+}
+
 func compile_shader_source(_source: string, type: GLenum) -> GLuint {
     var source = _source;
 
     var v = glCreateShader(type);
-    
+
     var source_datas: [..] *uint8;
     var source_lengths: [..] GLint;
 
@@ -194,4 +224,6 @@ func render_model(model: *Model) {
 
     glDisableVertexAttribArray(ATTRIB_POSITION);
     glDisableVertexAttribArray(ATTRIB_NORMAL);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

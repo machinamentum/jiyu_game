@@ -12,7 +12,7 @@ uniform mat4 view;
 uniform mat4 model;
 
 void main() {
-    out_color = vec4(1, 0, 0, 1);
+    out_color = vec4(1, 1, 1, 1);
     out_position = (view * model * vec4(in_position, 1)).xyz;
     out_normal = mat3(transpose(inverse(view * model))) * in_normal;
     gl_Position = projection * view * model * vec4(in_position, 1);

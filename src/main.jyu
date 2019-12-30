@@ -8,6 +8,7 @@
 #load "render.jyu";
 #load "obj_loader.jyu";
 // #load "NBT.jyu";
+#load "nuklear.jyu";
 
 #if os(Windows) {
     #load "LibOVR.jyu";
@@ -20,6 +21,7 @@ let COMPONENT_IS_INACTIVE: uint8 = (1 << 0);
 var renderer: Renderer; // maybe this should be managed in render, code outside render shouldn't see it ?
 
 var shader_default: Shader;
+var shader_ui: Shader;
 
 struct Scene {
     var root: *Entity;
@@ -62,6 +64,144 @@ func error_callback(error: int32, description: *uint8) {
     printf("[GLFW] %s\n", description);
 }
 
+struct UI_Vertex {
+    var position: Vector3;
+    var uv: Vector3;
+    var col: [4] uint8;
+}
+
+var cmds_buffer: nk_buffer;
+
+let MAX_VERTEX_MEMORY  = 512 * 1024;
+let MAX_ELEMENT_MEMORY = 128 * 1024;
+func make_draw_vertex_layout_element(attribute: nk_draw_vertex_layout_attribute, format: nk_draw_vertex_layout_format, offset: nk_size) -> nk_draw_vertex_layout_element {
+    var el: nk_draw_vertex_layout_element;
+    el.attribute = attribute;
+    el.format = format;
+    el.offset = offset;
+    return el;
+}
+
+func log_gl_errors() {
+    var err = glGetError();
+    while err != GL_NO_ERROR {
+        printf("GL Error: 0x%X\n", err);
+        err = glGetError();
+    }
+}
+
+func draw_ui(ctx: *nk_context, width: int, height: int,AA: nk_anti_aliasing, null_texture: nk_draw_null_texture) {
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_SCISSOR_TEST);
+    glActiveTexture(GL_TEXTURE0);
+
+    {
+        var vertices: *void;
+        var elements: *void;
+
+        var vbo: GLuint;
+        var ebo: GLuint;
+        glGenBuffers(1, *vbo);
+        glGenBuffers(1, *ebo);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+        glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_MEMORY, null, GL_STREAM_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_MEMORY, null, GL_STREAM_DRAW);
+        log_gl_errors();
+
+        vertices = glMapBufferRange(GL_ARRAY_BUFFER, 0, MAX_VERTEX_MEMORY, GL_MAP_WRITE_BIT);
+        log_gl_errors();
+        elements = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, MAX_ELEMENT_MEMORY, GL_MAP_WRITE_BIT);
+        log_gl_errors();
+        assert(vertices != null);
+        assert(elements != null);
+        {
+            // @TODO implement an offsetof() operator
+            // @TODO initializer lists
+            var vertex_layout: [..] nk_draw_vertex_layout_element;
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_POSITION, NK_FORMAT_FLOAT, 0));
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, sizeof(Vector3)));
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, sizeof(Vector3) + sizeof(Vector3)));
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_ATTRIBUTE_COUNT,NK_FORMAT_COUNT,0));
+
+            var config: nk_convert_config;
+            config.vertex_layout    = vertex_layout.data;
+            config.vertex_size      = sizeof(UI_Vertex);
+            config.vertex_alignment = alignof(UI_Vertex);
+            config._null = null_texture;
+            config.circle_segment_count = 22;
+            config.curve_segment_count = 22;
+            config.arc_segment_count = 22;
+            config.global_alpha = 1.0;
+            config.shape_AA = AA;
+            config.line_AA = AA;
+
+            var vbuf: nk_buffer;
+            var ebuf: nk_buffer;
+
+            nk_buffer_init_fixed(*vbuf, vertices, MAX_VERTEX_MEMORY);
+            nk_buffer_init_fixed(*ebuf, elements, MAX_ELEMENT_MEMORY);
+            nk_convert(ctx, *cmds_buffer, *vbuf, *ebuf, *config);
+
+            vertex_layout.reset();
+        }
+        glUnmapBuffer(GL_ARRAY_BUFFER);
+        glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
+        glEnableVertexAttribArray(ATTRIB_POSITION);
+        glEnableVertexAttribArray(ATTRIB_COLOR);
+        glEnableVertexAttribArray(ATTRIB_TEX_COORD);
+
+        glVertexAttribPointer(ATTRIB_POSITION, 3, GL_FLOAT, GL_FALSE, strideof(UI_Vertex), cast(*void)0);
+        glVertexAttribPointer(ATTRIB_TEX_COORD, 3, GL_FLOAT, GL_FALSE, strideof(UI_Vertex), cast(*void) sizeof(Vector3));
+        glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, strideof(UI_Vertex), cast(*void) (sizeof(Vector3) * 2));
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+//     #define nk_draw_foreach(cmd,ctx, b) for((cmd)=nk__draw_begin(ctx, b); (cmd)!=0; (cmd)=nk__draw_next(cmd, b, ctx))
+        var cmd = nk__draw_begin(ctx, *cmds_buffer);
+        var offset: *nk_draw_index;
+        while cmd {
+            if (cmd.elem_count == 0) continue;
+            glBindTexture(GL_TEXTURE_2D, cast(GLuint)cmd.texture.id);
+            log_gl_errors();
+//             glScissor(
+//                 (GLint)(cmd->clip_rect.x),
+//                 (GLint)((height - (GLint)(cmd->clip_rect.y + cmd->clip_rect.h))),
+//                 (GLint)(cmd->clip_rect.w),
+//                 (GLint)(cmd->clip_rect.h));
+            glDrawElements(GL_TRIANGLES, cast(GLsizei)cmd.elem_count, GL_UNSIGNED_SHORT, offset);
+            log_gl_errors();
+            offset += cmd.elem_count;
+            cmd = nk__draw_next(cmd, *cmds_buffer, ctx);
+        }
+        nk_clear(ctx);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        glDeleteBuffers(1, *vbo);
+        glDeleteBuffers(1, *ebo);
+
+        glDisableVertexAttribArray(ATTRIB_POSITION);
+        glDisableVertexAttribArray(ATTRIB_COLOR);
+        glDisableVertexAttribArray(ATTRIB_TEX_COORD);
+    }
+
+    glUseProgram(0);
+    glBindVertexArray(0);
+    glDisable(GL_BLEND);
+    glDisable(GL_SCISSOR_TEST);
+}
+
+
 func main(argc: int32, argv: **uint8) {
 
     // Oculus.init();
@@ -101,16 +241,23 @@ func main(argc: int32, argv: **uint8) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
     }
 
+    struct A_Test {
+        var prt: *void;
+        var a: int32;
+    }
 
-    let INITIAL_WIDTH  = 640;
-    let INITIAL_HEIGHT = 480;
+    printf("%d, %d, %d\n", sizeof(UI_Vertex), strideof(UI_Vertex), alignof(UI_Vertex));
+
+
+    let INITIAL_WIDTH  = 1280;
+    let INITIAL_HEIGHT = 720;
 
     var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!", null, null);
     glfwMakeContextCurrent(window);
 
     func get_proc(name: string) -> *void {
         var addr = glfwGetProcAddress(name.data);
-        if DEBUG printf("%.*s: %p\n", name.length, name.data, addr);
+//         if DEBUG printf("%.*s: %p\n", name.length, name.data, addr);
         return addr;
     }
 
@@ -118,16 +265,20 @@ func main(argc: int32, argv: **uint8) {
 
     init(*renderer);
 
-    var vertex_source   = read_entire_file("data/shaders/basic_light_vertex.glsl");
-    var fragment_source = read_entire_file("data/shaders/basic_light_fragment.glsl");
-    shader_default = compile_shader(vertex_source, fragment_source);
+    {
+        var vertex_source   = read_entire_file("data/shaders/basic_light_vertex.glsl");
+        var fragment_source = read_entire_file("data/shaders/basic_light_fragment.glsl");
+        shader_default = compile_shader(vertex_source, fragment_source);
+    }
 
-    glEnable(GL_DEPTH_TEST);
+    {
+        var vertex_source   = read_entire_file("data/shaders/basic_vertex.glsl");
+        var fragment_source = read_entire_file("data/shaders/basic_fragment.glsl");
+        shader_ui = compile_shader(vertex_source, fragment_source);
+    }
 
     var width: float = INITIAL_WIDTH;
     var height: float = INITIAL_HEIGHT;
-
-    renderer.projection_matrix = Matrix4.perspective(90, width / height, 1, 1000);
 
     var light: Light;
     light.position = make_Vector3(0, 1, 0);
@@ -145,10 +296,39 @@ func main(argc: int32, argv: **uint8) {
 
     scene.root = *root_entity;
 
+    var atlas: nk_font_atlas;
+    var font: *nk_font;
+    nk_font_atlas_init_default(*atlas);
+    nk_font_atlas_begin(*atlas);
+    font = nk_font_atlas_add_default(*atlas, 13, null);
+    var w: int32;
+    var h: int32;
+    var image = nk_font_atlas_bake(*atlas, *w, *h, NK_FONT_ATLAS_RGBA32);
+    var font_texture = Texture.upload_rgba_image(image, w, h);
+    printf("font texture: %d\n", font_texture.handle);
+    var null_texture: nk_draw_null_texture;
+    var nkh = nk_handle_id(cast(int32) font_texture.handle);
+    printf("nkh: %d\n", nkh.id);
+    nk_font_atlas_end(*atlas, nk_handle_id(cast(int32)font_texture.handle), *null_texture);
+
+     let EASY = 1;
+     let HARD = 2;
+     var op: int32 = EASY;
+     var value: float = 0.6;
+     var i: int32 =  20;
+     var ctx: nk_context;
+     let MAX_MEMORY = 4096 * 4096;
+     nk_init_fixed(*ctx, calloc(1, MAX_MEMORY), MAX_MEMORY, *font.handle);
+
+     nk_buffer_init_default(*cmds_buffer);
+
+     glDisable(GL_CULL_FACE);
+
     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        renderer.projection_matrix = Matrix4.perspective(90, width / height, 1, 1000);
         renderer.view_matrix = Matrix4.identity();
 
         move += 0;
@@ -163,7 +343,40 @@ func main(argc: int32, argv: **uint8) {
         }
 
         root_entity.position = make_Vector3(move, 0, 0);
+        glEnable(GL_DEPTH_TEST);
         render_scene(scene);
+        glDisable(GL_DEPTH_TEST);
+
+        renderer.projection_matrix = Matrix4.ortho(0, width / 2, height / 2, 0, -1, 1);
+        renderer.view_matrix = Matrix4.identity();
+        use_shader(*renderer, *shader_ui, Matrix4.identity());
+        use_texture(*shader_ui, *font_texture);
+
+        if (nk_begin(*ctx, "Show", nk_rect(50, 50, 220, 220), cast() (NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))) {
+             // fixed widget pixel width
+             nk_layout_row_static(*ctx, 30, 80, 1);
+             if (nk_button_label(*ctx, "button")) {
+                 // event handling
+             }
+
+             // fixed widget window ratio width
+             nk_layout_row_dynamic(*ctx, 30, 2);
+             if (nk_option_label(*ctx, "easy", op - HARD))  op = EASY;
+             if (nk_option_label(*ctx, "hard", op - EASY)) op = HARD;
+
+             // custom widget pixel width
+             nk_layout_row_begin(*ctx, NK_STATIC, 30, 2);
+             {
+                 nk_layout_row_push(*ctx, 50);
+                 nk_label(*ctx, "Volume:", cast() NK_TEXT_LEFT);
+                 nk_layout_row_push(*ctx, 110);
+                 nk_slider_float(*ctx, 0, *value, 1.0, 0.1);
+             }
+             nk_layout_row_end(*ctx);
+         }
+         nk_end(*ctx);
+
+        draw_ui(*ctx, cast() width, cast() height, NK_ANTI_ALIASING_OFF, null_texture);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
