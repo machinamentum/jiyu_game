@@ -69,7 +69,22 @@ func compile_c_lib(src_path: string, output_no_ext: string) {
         run_command(get_slice(args));
         args.reset();
     } else {
-        // @Incomplete
+        var args: [..] string;
+        args.add("gcc");
+        args.add("-c");
+        args.add("-o");
+        args.add(".temp_c.obj");
+
+        args.add(src_path);
+        run_command(get_slice(args));
+        args.reset();
+
+        args.add("ar");
+        args.add("-r");
+        args.add(concat(output_no_ext, ".a"));
+        args.add(".temp_c.obj");
+        run_command(get_slice(args));
+        args.reset();
     }
 }
 
