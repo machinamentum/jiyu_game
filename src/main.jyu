@@ -90,7 +90,8 @@ func log_gl_errors() {
     }
 }
 
-func draw_ui(ctx: *nk_context, width: int, height: int,AA: nk_anti_aliasing, null_texture: nk_draw_null_texture) {
+func draw_ui(ctx: *nk_context, width: int, height: int,
+AA: nk_anti_aliasing, null_texture: nk_draw_null_texture) {
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -196,7 +197,6 @@ func draw_ui(ctx: *nk_context, width: int, height: int,AA: nk_anti_aliasing, nu
     }
 
     glUseProgram(0);
-    glBindVertexArray(0);
     glDisable(GL_BLEND);
     glDisable(GL_SCISSOR_TEST);
 }
