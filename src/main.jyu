@@ -4,6 +4,7 @@
 #import "OpenGL";
 #import "LibC";
 #import "Basic";
+#import "Compiler";
 
 #load "render.jyu";
 #load "obj_loader.jyu";
@@ -31,10 +32,11 @@ struct Entity {
     var children: [..] *Entity;
 
     var position: Vector3;
+    // @TODO rotations/quaterions
     var model: *Model;
-}
 
-var r: float = 0.0;
+    var on_update: (this: *Entity, dt: float) -> void;
+}
 
 func render_entity_and_children(e: *Entity, local_to_world: Matrix4, override_shader: *Shader) {
     if e.model {
@@ -45,9 +47,6 @@ func render_entity_and_children(e: *Entity, local_to_world: Matrix4, override_sh
 
         var local_transform = Matrix4.translate(e.position);
         var final_transform = Matrix4.multiply(local_transform, local_to_world);
-        r += 0.0001;
-        var rot = Matrix4.rotate(make_Vector3(0, 1, 0), r);
-        final_transform = final_transform.multiply(rot);
         final_transform = Matrix4.translate(make_Vector3(0, 0, -3)).multiply(final_transform.inverse());
 
         use_shader(*renderer, shader, final_transform);
@@ -201,6 +200,57 @@ AA: nk_anti_aliasing, null_texture: nk_draw_null_texture) {
     glDisable(GL_SCISSOR_TEST);
 }
 
+func load_behavior_for_entity(entity: *Entity, code: string) -> bool {
+    var options: Build_Options;
+    options.only_want_obj_file = true;
+    var compiler = create_compiler_instance(*options);
+
+    compiler_add_module_search_path(compiler, "modules");
+
+    if compiler_load_string(compiler, code) != true return false;
+    if compiler_typecheck_program(compiler) != true return false ;
+    if compiler_generate_llvm_module(compiler) != true return false;
+
+    // New function to JIT the entire program.
+    if compiler_jit_program(compiler) != true return false;
+
+    entity.on_update = cast() compiler_jit_lookup_symbol(compiler, "on_update");
+}
+
+let BEHAVIORS =
+"""
+#import "Math";
+
+struct Model {}
+
+struct Entity {
+    var children: [..] *Entity;
+
+    var position: Vector3;
+    // @TODO rotations/quaterions
+    var model: *Model;
+
+    var on_update: (this: *Entity, dt: float) -> void;
+}
+
+var move: float = 0.0;
+var change: float = 0.004;
+
+func @export("on_update") on_update(e: *Entity, dt: float) -> void {
+    move += change;
+    if move > 2.0 {
+        move = 2.0;
+        change = -change;
+    }
+
+    if move < -2.0 {
+        move = -2.0;
+        change = -change;
+    }
+
+    e.position = Vector3.make(move, 0, 0);
+}
+""";
 
 func main(argc: int32, argv: **uint8) {
 
@@ -241,14 +291,6 @@ func main(argc: int32, argv: **uint8) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
     }
 
-    struct A_Test {
-        var prt: *void;
-        var a: int32;
-    }
-
-    printf("%d, %d, %d\n", sizeof(UI_Vertex), strideof(UI_Vertex), alignof(UI_Vertex));
-
-
     let INITIAL_WIDTH  = 1280;
     let INITIAL_HEIGHT = 720;
 
@@ -285,14 +327,13 @@ func main(argc: int32, argv: **uint8) {
 
     renderer.lights.add(light);
 
-    var move: float = 0.0;
-    var change: float = 0.001;
-
     var scene: Scene;
 
     var root_entity: Entity;
     var model = load_obj("data/models/monkey.obj");
     root_entity.model = *model;
+
+    load_behavior_for_entity(*root_entity, BEHAVIORS);
 
     scene.root = *root_entity;
 
@@ -324,25 +365,15 @@ func main(argc: int32, argv: **uint8) {
 
      glDisable(GL_CULL_FACE);
 
-    while glfwWindowShouldClose(window) == false {
+     while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        root_entity.on_update(1.0/60.0);
 
         renderer.projection_matrix = Matrix4.perspective(90, width / height, 1, 1000);
         renderer.view_matrix = Matrix4.identity();
 
-        move += 0;
-        if move > 2.0 {
-            move = 2.0;
-            change = -change;
-        }
-
-        if move < -2.0 {
-            move = -2.0;
-            change = -change;
-        }
-
-        root_entity.position = make_Vector3(move, 0, 0);
         glEnable(GL_DEPTH_TEST);
         render_scene(scene);
         glDisable(GL_DEPTH_TEST);

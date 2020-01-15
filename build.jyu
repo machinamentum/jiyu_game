@@ -4,6 +4,9 @@
 #import "Array";
 #import "Basic";
 
+// @TODO write a routine to copy needed DLLs from jiyu's module folder to the run_tree.
+// Currently need to do this for Compiler.
+
 #if os(Windows) {
     let PATH_SEPERATOR = '\\';
     let OCULUS_SDK_PATH     = "sup\\ovr_sdk_win_1.43.0\\LibOVR\\Lib\\Windows\\x64\\Release\\VS2017";
@@ -88,9 +91,18 @@ func compile_c_lib(src_path: string, output_no_ext: string) {
     }
 }
 
+func copy_file(src: string, dst: string) {
+//     printf("src: %.*s, %.*s\n", src.length, src.data, dst.length, dst.data);
+    var src_contents = read_entire_file(src);
+    if src_contents {
+        write_entire_file(dst, src_contents);
+    }
+}
+
 func @metaprogram main(argc: int32, argv: **uint8) {
     var as_metaprogram = false;
     var compile_c_libs = false;
+    var update_module_deps = false;
     for 0..argc-1 {
         var s: string;
         s.data = argv[it];
@@ -103,6 +115,15 @@ func @metaprogram main(argc: int32, argv: **uint8) {
 
         if s == "build_libs" {
             compile_c_libs = true;
+        }
+
+        if s == "update_module_deps" {
+            update_module_deps = true;
+        }
+
+        if s == "init" {
+            compile_c_libs     = true;
+            update_module_deps = true;
         }
     }
 
@@ -155,8 +176,6 @@ func @metaprogram main(argc: int32, argv: **uint8) {
         builder.reset();
     }
 
-    free(cwd.data);
-
     if compiler_load_file(compiler, "src/main.jyu") != true return;
     if compiler_typecheck_program(compiler) != true return;
     if compiler_generate_llvm_module(compiler) != true return;
@@ -172,4 +191,21 @@ func @metaprogram main(argc: int32, argv: **uint8) {
         if compiler_emit_object_file(compiler) != true return;
         if compiler_run_default_link_command(compiler) != true return;
     }
+
+//     destroy_compiler_instance(compiler);
+
+    if update_module_deps {
+      // Copy jiyu library to run tree
+      var jiyu_modules = compiler_system_get_default_module_search_path();
+      copy_file(concat(jiyu_modules, "/jiyu.dll"),      concat(cwd, "/run_tree/jiyu.dll"));
+      copy_file(concat(jiyu_modules, "/libjiyu.so"),    concat(cwd, "/run_tree/libjiyu.so"));
+      copy_file(concat(jiyu_modules, "/libjiyu.dylib"), concat(cwd, "/run_tree/libjiyu.dylib"));
+
+      // Copy some needed modules
+      var out_modules = concat(cwd, "/run_tree/modules");
+      copy_file(concat(jiyu_modules, "/Math.jyu"), concat(out_modules, "/Math.jyu"));
+      copy_file(concat(jiyu_modules, "/LibC.jyu"), concat(out_modules, "/LibC.jyu"));
+    }
+
+    free(cwd.data);
 }

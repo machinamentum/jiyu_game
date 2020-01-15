@@ -6,8 +6,8 @@ Game programming stuff being written in an experimental programming language. Se
 jiyu build.jyu
 ```
 
-A first-time build may require that some support libraries be compiled. The build.jyu program can do this automatically by calling:
+A first-time build requires some support libraries to be compiled and local copies of some of jiyu's modules to be made:
 ```
-jiyu build.jyu -- build_libs
+jiyu build.jyu -- init
 ```
 
