@@ -201,36 +201,35 @@ func main(argc: int32, argv: **uint8) {
         render_scene(scene);
         glDisable(GL_DEPTH_TEST);
 
+        var ctx = *game.ui_context;
+        if (nk_begin(ctx, "Show", nk_rect(50, 50, 220, 220), cast() (NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))) {
+            // fixed widget pixel width
+            nk_layout_row_static(ctx, 30, 80, 1);
+            if (nk_button_label(ctx, "button")) {
+                // event handling
+            }
+
+            // fixed widget window ratio width
+            nk_layout_row_dynamic(ctx, 30, 2);
+            if (nk_option_label(ctx, "easy", op - HARD))  op = EASY;
+            if (nk_option_label(ctx, "hard", op - EASY)) op = HARD;
+
+            // custom widget pixel width
+            nk_layout_row_begin(ctx, NK_STATIC, 30, 2);
+            {
+                nk_layout_row_push(ctx, 50);
+                nk_label(ctx, "Volume:", cast() NK_TEXT_LEFT);
+                nk_layout_row_push(ctx, 110);
+                nk_slider_float(ctx, 0, *value, 1.0, 0.1);
+            }
+            nk_layout_row_end(ctx);
+        }
+        nk_end(ctx);
+
         renderer.projection_matrix = Matrix4.ortho(0, width, height, 0, -1, 1);
         renderer.view_matrix = Matrix4.identity();
         use_shader(*renderer, *shader_ui, Matrix4.identity());
         use_texture(*shader_ui, *font_texture);
-
-        var ctx = *game.ui_context;
-        if (nk_begin(ctx, "Show", nk_rect(50, 50, 220, 220), cast() (NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE))) {
-             // fixed widget pixel width
-             nk_layout_row_static(ctx, 30, 80, 1);
-             if (nk_button_label(ctx, "button")) {
-                 // event handling
-             }
-
-             // fixed widget window ratio width
-             nk_layout_row_dynamic(ctx, 30, 2);
-             if (nk_option_label(ctx, "easy", op - HARD))  op = EASY;
-             if (nk_option_label(ctx, "hard", op - EASY)) op = HARD;
-
-             // custom widget pixel width
-             nk_layout_row_begin(ctx, NK_STATIC, 30, 2);
-             {
-                 nk_layout_row_push(ctx, 50);
-                 nk_label(ctx, "Volume:", cast() NK_TEXT_LEFT);
-                 nk_layout_row_push(ctx, 110);
-                 nk_slider_float(ctx, 0, *value, 1.0, 0.1);
-             }
-             nk_layout_row_end(ctx);
-         }
-         nk_end(ctx);
-
         draw_ui(cast() width, cast() height, NK_ANTI_ALIASING_OFF);
 
         glfwSwapBuffers(window);
