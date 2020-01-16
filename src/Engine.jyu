@@ -1,0 +1,28 @@
+// Contains definitions (and API functions) that are shared between the game executable
+// and game scripts.
+
+#import "Math";
+
+struct Scene {
+    var root: *Entity;
+}
+
+struct Entity {
+    var children: [..] *Entity;
+
+    var position: Vector3;
+    // @TODO rotations/quaterions
+    var model: *Model;
+
+    var on_update: (this: *Entity, dt: float) -> void;
+}
+
+struct Model {
+    var vbo_handle: uint32;
+    var is_dirty: bool = true;
+
+    var vertices:   [..] Vector3;
+    var normals:    [..] Vector3;
+    var tex_coords: [..] Vector3;
+}
+

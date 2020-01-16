@@ -1,0 +1,21 @@
+#import "Math";
+#import "Engine";
+
+var move: float = 0.0;
+var change: float = 0.004;
+
+func @export("on_update") on_update(e: *Entity, dt: float) -> void {
+    move += change;
+    if move > 2.0 {
+        move = 2.0;
+        change = -change;
+    }
+
+    if move < -2.0 {
+        move = -2.0;
+        change = -change;
+    }
+
+    e.position = Vector3.make(move, 0, -3);
+}
+

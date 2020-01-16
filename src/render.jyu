@@ -51,15 +51,6 @@ func make_Vector3(x: float, y: float, z: float) -> Vector3 {
     return Vector3.make(x, y, z);
 }
 
-struct Model {
-    var vbo_handle: GLuint;
-    var is_dirty: bool = true;
-
-    var vertices:   [..] Vector3;
-    var normals:    [..] Vector3;
-    var tex_coords: [..] Vector3;
-}
-
 struct Shader {
     var handle: GLuint;
 }
@@ -226,4 +217,126 @@ func render_model(model: *Model) {
     glDisableVertexAttribArray(ATTRIB_NORMAL);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+func draw_ui(width: int, height: int, AA: nk_anti_aliasing) {
+    struct UI_Vertex {
+        var position: Vector3;
+        var uv: Vector3;
+        var col: [4] uint8;
+    }
+
+    let MAX_VERTEX_MEMORY  = 512 * 1024;
+    let MAX_ELEMENT_MEMORY = 128 * 1024;
+    func make_draw_vertex_layout_element(attribute: nk_draw_vertex_layout_attribute, format: nk_draw_vertex_layout_format, offset: nk_size) -> nk_draw_vertex_layout_element {
+        var el: nk_draw_vertex_layout_element;
+        el.attribute = attribute;
+        el.format = format;
+        el.offset = offset;
+        return el;
+    }
+
+    var ctx = *game.ui_context;
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_SCISSOR_TEST);
+    glActiveTexture(GL_TEXTURE0);
+
+    {
+        var vertices: *void;
+        var elements: *void;
+
+        var vbo: GLuint;
+        var ebo: GLuint;
+        glGenBuffers(1, *vbo);
+        glGenBuffers(1, *ebo);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+        glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_MEMORY, null, GL_STREAM_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_ELEMENT_MEMORY, null, GL_STREAM_DRAW);
+
+        vertices = glMapBufferRange(GL_ARRAY_BUFFER, 0, MAX_VERTEX_MEMORY, GL_MAP_WRITE_BIT);
+        elements = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, MAX_ELEMENT_MEMORY, GL_MAP_WRITE_BIT);
+        assert(vertices != null);
+        assert(elements != null);
+        {
+            // @TODO implement an offsetof() operator
+            // @TODO initializer lists
+            var vertex_layout: [..] nk_draw_vertex_layout_element;
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_POSITION, NK_FORMAT_FLOAT, 0));
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, sizeof(Vector3)));
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, sizeof(Vector3) + sizeof(Vector3)));
+            vertex_layout.add(make_draw_vertex_layout_element(NK_VERTEX_ATTRIBUTE_COUNT,NK_FORMAT_COUNT,0));
+
+            var config: nk_convert_config;
+            config.vertex_layout    = vertex_layout.data;
+            config.vertex_size      = sizeof(UI_Vertex);
+            config.vertex_alignment = alignof(UI_Vertex);
+            config._null = game.ui_null_texture;
+            config.circle_segment_count = 22;
+            config.curve_segment_count = 22;
+            config.arc_segment_count = 22;
+            config.global_alpha = 1.0;
+            config.shape_AA = AA;
+            config.line_AA = AA;
+
+            var vbuf: nk_buffer;
+            var ebuf: nk_buffer;
+
+            nk_buffer_init_fixed(*vbuf, vertices, MAX_VERTEX_MEMORY);
+            nk_buffer_init_fixed(*ebuf, elements, MAX_ELEMENT_MEMORY);
+            nk_convert(ctx, *game.ui_cmds_buffer, *vbuf, *ebuf, *config);
+
+            vertex_layout.reset();
+        }
+        glUnmapBuffer(GL_ARRAY_BUFFER);
+        glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
+        glEnableVertexAttribArray(ATTRIB_POSITION);
+        glEnableVertexAttribArray(ATTRIB_COLOR);
+        glEnableVertexAttribArray(ATTRIB_TEX_COORD);
+
+        glVertexAttribPointer(ATTRIB_POSITION, 3, GL_FLOAT, GL_FALSE, strideof(UI_Vertex), cast(*void)0);
+        glVertexAttribPointer(ATTRIB_TEX_COORD, 3, GL_FLOAT, GL_FALSE, strideof(UI_Vertex), cast(*void) sizeof(Vector3));
+        glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, strideof(UI_Vertex), cast(*void) (sizeof(Vector3) * 2));
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+//     #define nk_draw_foreach(cmd,ctx, b) for((cmd)=nk__draw_begin(ctx, b); (cmd)!=0; (cmd)=nk__draw_next(cmd, b, ctx))
+        var cmd = nk__draw_begin(ctx, *game.ui_cmds_buffer);
+        var offset: *nk_draw_index;
+        while cmd {
+            if (cmd.elem_count == 0) continue;
+            glBindTexture(GL_TEXTURE_2D, cast(GLuint)cmd.texture.id);
+//             glScissor(
+//                 (GLint)(cmd->clip_rect.x),
+//                 (GLint)((height - (GLint)(cmd->clip_rect.y + cmd->clip_rect.h))),
+//                 (GLint)(cmd->clip_rect.w),
+//                 (GLint)(cmd->clip_rect.h));
+            glDrawElements(GL_TRIANGLES, cast(GLsizei)cmd.elem_count, GL_UNSIGNED_SHORT, offset);
+            offset += cmd.elem_count;
+            cmd = nk__draw_next(cmd, *game.ui_cmds_buffer, ctx);
+        }
+        nk_clear(ctx);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        glDeleteBuffers(1, *vbo);
+        glDeleteBuffers(1, *ebo);
+
+        glDisableVertexAttribArray(ATTRIB_POSITION);
+        glDisableVertexAttribArray(ATTRIB_COLOR);
+        glDisableVertexAttribArray(ATTRIB_TEX_COORD);
+    }
+
+    glUseProgram(0);
+    glDisable(GL_BLEND);
+    glDisable(GL_SCISSOR_TEST);
 }

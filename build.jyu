@@ -194,6 +194,8 @@ func @metaprogram main(argc: int32, argv: **uint8) {
 
 //     destroy_compiler_instance(compiler);
 
+    var out_modules = concat(cwd, "/run_tree/modules");
+
     if update_module_deps {
       // Copy jiyu library to run tree
       var jiyu_modules = compiler_system_get_default_module_search_path();
@@ -202,10 +204,13 @@ func @metaprogram main(argc: int32, argv: **uint8) {
       copy_file(concat(jiyu_modules, "/libjiyu.dylib"), concat(cwd, "/run_tree/libjiyu.dylib"));
 
       // Copy some needed modules
-      var out_modules = concat(cwd, "/run_tree/modules");
       copy_file(concat(jiyu_modules, "/Math.jyu"), concat(out_modules, "/Math.jyu"));
       copy_file(concat(jiyu_modules, "/LibC.jyu"), concat(out_modules, "/LibC.jyu"));
     }
+
+    var src_dir = concat(cwd, "/src");
+    // Always copy the Engine.jyu source to the final module directory.
+    copy_file(concat(src_dir, "/Engine.jyu"), concat(out_modules, "/Engine.jyu"));
 
     free(cwd.data);
 }
