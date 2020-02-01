@@ -1,65 +1,147 @@
 
 #import "Array";
 
-let TAG_End        : uint8 = 0;
-let TAG_Byte       : uint8 = 1;
-let TAG_Short      : uint8 = 2;
-let TAG_Int        : uint8 = 3;
-let TAG_Long       : uint8 = 4;
-let TAG_Float      : uint8 = 5;
-let TAG_Double     : uint8 = 6;
-let TAG_Byte_Array : uint8 = 7;
-let TAG_String     : uint8 = 8;
-let TAG_List       : uint8 = 9;
-let TAG_Compound   : uint8 = 10;
-let TAG_Int_Array  : uint8 = 11;
-let TAG_Long_Array : uint8 = 12;
-
 // @TODO namespaces
 struct NBT {
 
+    enum Tag_Type : uint8 {
+        End        = 0;
+        Byte       = 1;
+        Short      = 2;
+        Int        = 3;
+        Long       = 4;
+        Float      = 5;
+        Double     = 6;
+        Byte_Array = 7;
+        String     = 8;
+        List       = 9;
+        Compound   = 10;
+        Int_Array  = 11;
+        Long_Array = 12;
+    }
+
     struct Tag {
-        var type: uint8;
+        var type: Tag_Type;
         var name: string;
 
         var int_value: int64;
         var float_value: double;
         var string_value: string;
         var list_value: [..] Tag;
-        var int_array_value: [..] int64;
+        var byte_array_value: [] int8;
+        var int_array_value : [] int64;
     }
 
-    func make_tag(type: uint8, name: string) -> Tag {
+    func make_tag(type: Tag_Type, name: string) -> Tag {
         var tag: Tag;
         tag.type = type;
         tag.name = name;
         return tag;
     }
 
-    // Parses a Tag from input and advances the input string by the number of bytes parsed.
-    // @TODO When tuples are supported, change this to return a tuple of the advanced string
-    // and the resulting tag.
-    func get_tag(input: *string) -> Tag {
-        if input.length == 0 return make_tag(TAG_End, "");
+    func get_tag(_input: string) -> (output: string, tag: Tag) {
+        var input = _input;
 
-        var type = << cast(*uint8) input.data;
-        advance(input, 1);
+        if input.length == 0 return (input, make_tag(.End, ""));
 
-        if type == TAG_End return make_tag(TAG_End, "");
+        var type = << cast(*Tag_Type) input.data;
+        advance(*input, 1);
+
+        if type == .End return (input, make_tag(.End, ""));
         
-        var name_length = << cast(*uint16) input.data;
+        var name_length = get_uint16be(input);
+        advance(*input, 2);
 
-        if type == TAG_Byte {
+        var name = input;
+        name.length = cast() name_length;
 
+        var tag = make_tag(type, name);
+
+        if type == .Byte {
+            tag.int_value = cast(int8) <<input.data;
+            advance(*input, 1);
+        } else if type == .Short {
+            tag.int_value = cast(int16) get_uint16be(input);
+            advance(*input, 2);
+        } else if type == .Int {
+            tag.int_value = get_int32be(input);
+            advance(*input, 4);
+        } else if type == .Long {
+            tag.int_value = get_int64be(input);
+            advance(*input, 8);
+        } else if type == .Float {
+            tag.float_value = get_float(input);
+            advance(*input, 4);
+        } else if type == .Double {
+            tag.float_value = get_double(input);
+            advance(*input, 8);
+        } else if type == .Byte_Array {
+            var length = get_int32be(input);
+            advance(*input, length);
+
+            tag.byte_array_value.count = length;
+            tag.byte_array_value.data = cast() input.data;
+
+            advance(*input, length);
+        } else if type == .String {
+            var length = cast(int16) get_uint16be(input);
+            advance(*input, 2);
+
+            tag.string_value.length = length;
+            tag.string_value.data   = input.data;
+
+            advance(*input, length);
         }
+
+        return (input, tag);
+    }
+
+    func get_float(input: string) -> float {
+        // @Cleanup we can improve this using a read+byteswap once we can detect endianess
+        var i = get_int32be(input);
+        return <<cast(*float)*i;
+    }
+
+    func get_double(input: string) -> double {
+        // @Cleanup we can improve this using a read+byteswap once we can detect endianess
+        var i = get_int64be(input);
+        return <<cast(*double)*i;
+    }
+
+    func get_int64be(input: string) -> int64 {
+        assert(input.length >= 8);
+        // @Cleanup we can improve this using a read+byteswap once we can detect endianess
+        var a7: uint64 = <<cast(*uint8) input.data;
+        var a6: uint64 = <<cast(*uint8) input.data + 1;
+        var a5: uint64 = <<cast(*uint8) input.data + 2;
+        var a4: uint64 = <<cast(*uint8) input.data + 3;
+        var a3: uint64 = <<cast(*uint8) input.data + 4;
+        var a2: uint64 = <<cast(*uint8) input.data + 5;
+        var a1: uint64 = <<cast(*uint8) input.data + 6;
+        var a0: uint64 = <<cast(*uint8) input.data + 7;
+
+        return  cast(int64) ((a7 << 56) | (a6 << 48) | (a5 << 40) | (a4 << 32) |
+                            (a3 << 24) | (a2 << 16) | (a1 << 8)  | (a0 << 0));
+    }
+
+    func get_int32be(input: string) -> int32 {
+        assert(input.length >= 4);
+        // @Cleanup we can improve this using a read+byteswap once we can detect endianess
+        var a3: uint32 = <<cast(*uint8) input.data;
+        var a2: uint32 = <<cast(*uint8) input.data + 1;
+        var a1: uint32 = <<cast(*uint8) input.data + 2;
+        var a0: uint32 = <<cast(*uint8) input.data + 3;
+
+        return cast(int32) ((a3 << 24) | (a2 << 16) | (a1 << 8) | a0);
+    }
+
+    func get_uint16be(input: string) -> uint16 {
+        assert(input.length >= 2);
+        // @Cleanup we can improve this using a read+byteswap once we can detect endianess
+        var hi: uint16 = <<cast(*uint8) input.data;
+        var lo: uint16 = <<cast(*uint8) input.data + 1;
+
+        return (hi << 8) | lo;
     }
 
 } // NBT
-
-// @TODO string_length_type
-func advance(s: *string, amount: int32) {
-    assert(s.length >= amount);
-
-    s.data += amount;
-    s.length -= amount;
-}

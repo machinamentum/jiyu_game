@@ -12,6 +12,11 @@ struct Renderer {
     var view_matrix: Matrix4;
 
     var lights: [..] Light;
+
+    func init(renderer: *Renderer) {
+        glGenVertexArrays(1, *renderer.global_vao_handle);
+        glBindVertexArray(renderer.global_vao_handle);
+    }
 }
 
 struct Light {
@@ -40,15 +45,6 @@ struct Texture {
         texture.height = height;
         return texture;
     }
-}
-
-func init(renderer: *Renderer) {
-    glGenVertexArrays(1, *renderer.global_vao_handle);
-    glBindVertexArray(renderer.global_vao_handle);
-}
-
-func make_Vector3(x: float, y: float, z: float) -> Vector3 {
-    return Vector3.make(x, y, z);
 }
 
 struct Shader {

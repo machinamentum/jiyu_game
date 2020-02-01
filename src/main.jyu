@@ -8,7 +8,7 @@
 
 #load "render.jyu";
 #load "obj_loader.jyu";
-// #load "NBT.jyu";
+#load "NBT.jyu";
 #load "nuklear.jyu";
 
 #if os(Windows) {
@@ -18,8 +18,6 @@
 #load "Engine.jyu";
 
 let DEBUG = true;
-
-let COMPONENT_IS_INACTIVE: uint8 = (1 << 0);
 
 var renderer: Renderer; // maybe this should be managed in render, code outside render shouldn't see it ?
 
@@ -130,7 +128,7 @@ func main(argc: int32, argv: **uint8) {
 
     init_gl_functions(get_proc);
 
-    init(*renderer);
+    renderer.init();
 
     {
         var vertex_source   = read_entire_file("data/shaders/basic_light_vertex.glsl");
@@ -148,7 +146,7 @@ func main(argc: int32, argv: **uint8) {
     var height: float = INITIAL_HEIGHT;
 
     var light: Light;
-    light.position = make_Vector3(0, 1, 0);
+    light.position = Vector3.make(0, 1, 0);
 
     renderer.lights.add(light);
 
@@ -177,18 +175,18 @@ func main(argc: int32, argv: **uint8) {
     printf("nkh: %d\n", nkh.id);
     nk_font_atlas_end(*atlas, nk_handle_id(cast(int32)font_texture.handle), *game.ui_null_texture);
 
-     let EASY = 1;
-     let HARD = 2;
-     var op: int32 = EASY;
-     var value: float = 0.6;
-     var i: int32 =  20;
-     let MAX_MEMORY = 4096 * 4096;
-     nk_init_fixed(*game.ui_context, calloc(1, MAX_MEMORY), MAX_MEMORY, *font.handle);
-     nk_buffer_init_default(*game.ui_cmds_buffer);
+    let EASY = 1;
+    let HARD = 2;
+    var op: int32 = EASY;
+    var value: float = 0.6;
+    var i: int32 =  20;
+    let MAX_MEMORY = 4096 * 4096;
+    nk_init_fixed(*game.ui_context, calloc(1, MAX_MEMORY), MAX_MEMORY, *font.handle);
+    nk_buffer_init_default(*game.ui_cmds_buffer);
 
-     glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
-     while glfwWindowShouldClose(window) == false {
+    while glfwWindowShouldClose(window) == false {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

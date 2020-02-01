@@ -25,4 +25,3 @@ struct Model {
     var normals:    [..] Vector3;
     var tex_coords: [..] Vector3;
 }
-

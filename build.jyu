@@ -197,15 +197,17 @@ func @metaprogram main(argc: int32, argv: **uint8) {
     var out_modules = concat(cwd, "/run_tree/modules");
 
     if update_module_deps {
-      // Copy jiyu library to run tree
-      var jiyu_modules = compiler_system_get_default_module_search_path();
-      copy_file(concat(jiyu_modules, "/jiyu.dll"),      concat(cwd, "/run_tree/jiyu.dll"));
-      copy_file(concat(jiyu_modules, "/libjiyu.so"),    concat(cwd, "/run_tree/libjiyu.so"));
-      copy_file(concat(jiyu_modules, "/libjiyu.dylib"), concat(cwd, "/run_tree/libjiyu.dylib"));
+        mkdir(to_c_string(out_modules));
 
-      // Copy some needed modules
-      copy_file(concat(jiyu_modules, "/Math.jyu"), concat(out_modules, "/Math.jyu"));
-      copy_file(concat(jiyu_modules, "/LibC.jyu"), concat(out_modules, "/LibC.jyu"));
+        // Copy jiyu library to run tree
+        var jiyu_modules = compiler_system_get_default_module_search_path();
+        copy_file(concat(jiyu_modules, "/jiyu.dll"),      concat(cwd, "/run_tree/jiyu.dll"));
+        copy_file(concat(jiyu_modules, "/libjiyu.so"),    concat(cwd, "/run_tree/libjiyu.so"));
+        copy_file(concat(jiyu_modules, "/libjiyu.dylib"), concat(cwd, "/run_tree/libjiyu.dylib"));
+
+        // Copy some needed modules
+        copy_file(concat(jiyu_modules, "/Math.jyu"), concat(out_modules, "/Math.jyu"));
+        copy_file(concat(jiyu_modules, "/LibC.jyu"), concat(out_modules, "/LibC.jyu"));
     }
 
     var src_dir = concat(cwd, "/src");

@@ -47,12 +47,12 @@ func load_obj(path: string) -> Model {
             var x = get_float(splits[1]);
             var y = get_float(splits[2]);
             var z = get_float(splits[3]);
-            vertices.add(make_Vector3(x, y, z));
+            vertices.add(Vector3.make(x, y, z));
         } else if splits[0] == "vn" {
             var x = get_float(splits[1]);
             var y = get_float(splits[2]);
             var z = get_float(splits[3]);
-            normals.add(make_Vector3(x, y, z));
+            normals.add(Vector3.make(x, y, z));
         } else if splits[0] == "f" {
             {
                 var sub = split(splits[1], '/');
