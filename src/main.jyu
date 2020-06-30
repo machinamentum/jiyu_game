@@ -28,6 +28,23 @@ struct Game {
     var ui_context     : nk_context;
     var ui_cmds_buffer : nk_buffer;
     var ui_null_texture: nk_draw_null_texture;
+
+    var inputs_this_frame: [..] Input_Event;
+}
+
+struct Input_Event {
+    enum Type {
+        MOUSE_MOVE;
+        MOUSE_BUTTON_LEFT;
+        MOUSE_BUTTON_RIGHT;
+    }
+
+    var type: Type;
+
+    var button_state: int32;
+
+    var mouse_x: double;
+    var mouse_y: double;
 }
 
 var game: Game;
@@ -73,6 +90,32 @@ func load_behavior_for_entity(entity: *Entity, code: string) -> bool {
     entity.on_update = cast() compiler_jit_lookup_symbol(compiler, "on_update");
 }
 
+func key_callback(window: *GLFWwindow, key: int32, scancode: int32, action: int32, mods: int32) -> void {
+
+}
+
+func cursor_callback(window: *GLFWwindow, xpos: double, ypos: double) {
+    var ev: Input_Event;
+    ev.type = .MOUSE_MOVE;
+    ev.mouse_x = xpos;
+    ev.mouse_y = ypos;
+
+    game.inputs_this_frame.add(ev);
+}
+
+func mouse_button_callback(window: *GLFWwindow, button: int32, action: int32, mods: int32) -> void {
+    var ev: Input_Event;
+    if      (button == GLFW_MOUSE_BUTTON_LEFT ) ev.type = .MOUSE_BUTTON_LEFT;
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT) ev.type = .MOUSE_BUTTON_RIGHT;
+    else return;
+
+    if (action == GLFW_RELEASE) ev.button_state = 0;
+    else                        ev.button_state = 1;
+
+    game.inputs_this_frame.add(ev); 
+
+}
+
 func main(argc: int32, argv: **uint8) {
 
     // Oculus.init();
@@ -89,14 +132,13 @@ func main(argc: int32, argv: **uint8) {
     }
 
     // If we're run as a metaprogram, assume build.jyu has changed directory to the run_tree.
-    // @Cleanup UnaryNot
-    if is_run_as_metaprogram == false {
+    if !is_run_as_metaprogram {
         var exe_path = get_executable_path();
         if DEBUG printf("Exe path: '%.*s'\n", exe_path.length, exe_path.data);
         set_working_directory(basename(exe_path));
     }
 
-    if (glfwInit() == 0) return;
+    if !glfwInit() return;
 
     glfwSetErrorCallback(cast() error_callback);
 
@@ -119,6 +161,9 @@ func main(argc: int32, argv: **uint8) {
 
     var window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Hello, Sailor!", null, null);
     glfwMakeContextCurrent(window);
+    glfwSetKeyCallback(window, cast() key_callback);
+    glfwSetCursorPosCallback(window, cast() cursor_callback);
+    glfwSetMouseButtonCallback(window, cast() mouse_button_callback);
 
     func get_proc(name: string) -> *void {
         var addr = glfwGetProcAddress(name.data);
@@ -133,16 +178,16 @@ func main(argc: int32, argv: **uint8) {
     {
         var vertex_source   = read_entire_file("data/shaders/basic_light_vertex.glsl");
         var fragment_source = read_entire_file("data/shaders/basic_light_fragment.glsl");
-        shader_default = compile_shader(vertex_source, fragment_source);
+        shader_default = compile_shader(vertex_source.result, fragment_source.result);
     }
 
     {
         var vertex_source   = read_entire_file("data/shaders/basic_vertex.glsl");
         var fragment_source = read_entire_file("data/shaders/basic_fragment.glsl");
-        shader_ui = compile_shader(vertex_source, fragment_source);
+        shader_ui = compile_shader(vertex_source.result, fragment_source.result);
     }
 
-    var width: float = INITIAL_WIDTH;
+    var width : float = INITIAL_WIDTH;
     var height: float = INITIAL_HEIGHT;
 
     var light: Light;
@@ -157,7 +202,7 @@ func main(argc: int32, argv: **uint8) {
     root_entity.model = *model;
 
     var behavior_script = read_entire_file("data/scripts/test_script.jyu"); // @Leak
-    load_behavior_for_entity(*root_entity, behavior_script);
+    load_behavior_for_entity(*root_entity, behavior_script.result);
 
     scene.root = *root_entity;
 
@@ -186,7 +231,28 @@ func main(argc: int32, argv: **uint8) {
 
     glDisable(GL_CULL_FACE);
 
+    var last_mx: double;
+    var last_my: double;
+
     while glfwWindowShouldClose(window) == false {
+
+        nk_input_begin(ctx);
+        for game.inputs_this_frame {
+            switch it.type {
+                case .MOUSE_MOVE:
+                    nk_input_motion(ctx, cast() it.mouse_x, cast() it.mouse_y);
+                    last_mx = it.mouse_x;
+                    last_my = it.mouse_y;
+                case .MOUSE_BUTTON_LEFT:
+                    nk_input_button(ctx, NK_BUTTON_LEFT, cast() last_mx, cast() last_my, it.button_state);
+                case .MOUSE_BUTTON_RIGHT:
+                    nk_input_button(ctx, NK_BUTTON_RIGHT, cast() last_mx, cast() last_my, it.button_state);
+            }
+        }
+        nk_input_end(ctx);
+
+        game.inputs_this_frame.reset();
+
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

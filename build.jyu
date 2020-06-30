@@ -92,10 +92,9 @@ func compile_c_lib(src_path: string, output_no_ext: string) {
 }
 
 func copy_file(src: string, dst: string) {
-//     printf("src: %.*s, %.*s\n", src.length, src.data, dst.length, dst.data);
     var src_contents = read_entire_file(src);
-    if src_contents {
-        write_entire_file(dst, src_contents);
+    if src_contents.success {
+        write_entire_file(dst, src_contents.result);
     }
 }
 

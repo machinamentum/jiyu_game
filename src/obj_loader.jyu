@@ -23,13 +23,24 @@ func get_int(input: string) -> int32 {
 
 func load_obj(path: string) -> Model {
     var data = read_entire_file(path);
+    assert(data.success);
 
-    var lines = get_lines(data);
+    defer free(data.result);
+
+    var lines = get_lines(data.result);
+    defer free(lines.data);
+
     var model: Model;
 
     var vertices:   [..] Vector3;
     var normals:    [..] Vector3;
     var tex_coords: [..] Vector3;
+
+    defer {
+        vertices.reset();
+        normals.reset();
+        tex_coords.reset();
+    }
 
     // printf("char: %d\n".data, ' ');
     for lines {
@@ -82,11 +93,5 @@ func load_obj(path: string) -> Model {
         }
     }
 
-    free(lines.data);
-    free(data.data);
-
-    vertices.reset();
-    normals.reset();
-    tex_coords.reset();
     return model;
 }
