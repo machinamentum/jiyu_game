@@ -17,8 +17,6 @@
 
 #load "Engine.jyu";
 
-let DEBUG = true;
-
 var renderer: Renderer; // maybe this should be managed in render, code outside render shouldn't see it ?
 
 var shader_default: Shader;
@@ -134,7 +132,9 @@ func main(argc: int32, argv: **uint8) {
     // If we're run as a metaprogram, assume build.jyu has changed directory to the run_tree.
     if !is_run_as_metaprogram {
         var exe_path = get_executable_path();
-        if DEBUG printf("Exe path: '%.*s'\n", exe_path.length, exe_path.data);
+        #if defined(DEBUG) {
+            printf("Exe path: '%.*s'\n", exe_path.length, exe_path.data);
+        }
         set_working_directory(basename(exe_path));
     }
     
@@ -172,7 +172,9 @@ func main(argc: int32, argv: **uint8) {
 
     func get_proc(name: string) -> *void {
         var addr = glfwGetProcAddress(name.data);
-//         if DEBUG printf("%.*s: %p\n", name.length, name.data, addr);
+        #if defined(DEBUG) {
+            printf("%.*s: %p\n", name.length, name.data, addr);
+        }
         return addr;
     }
 

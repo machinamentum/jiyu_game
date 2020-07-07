@@ -3,6 +3,7 @@
 #import "LibC";
 #import "Array";
 #import "Basic";
+#import "C_Build";
 
 // @TODO write a routine to copy needed DLLs from jiyu's module folder to the run_tree.
 // Currently need to do this for Compiler.
@@ -17,78 +18,6 @@
     let PATH_SEPERATOR = '/';
 }
 
-func wide_to_mb(wide: *wchar_t) -> string {
-    var size = wcstombs(null, wide, 0);
-    var data = cast(*uint8) malloc(size + 1);
-    wcstombs(data, wide, size+1);
-    return to_string(data);
-}
-
-func compile_c_lib(src_path: string, output_no_ext: string, create_library = false) {
-    #if os(Windows) {
-        #import "microsoft_craziness";
-
-        var msvc: Find_Result;
-        find_visual_studio_and_windows_sdk(*msvc);
-
-        if msvc.windows_sdk_version == 0 {
-            printf("Could not find Windows Visual Studio SDK.\n");
-            return;
-        }
-
-        var exe_path = wide_to_mb(msvc.vs_exe_path);
-        var include_path = wide_to_mb(msvc.windows_sdk_include);
-        var ucrt_inc   = concatenate(include_path, "\\ucrt");
-        var um_inc     = concatenate(include_path, "\\um");
-        var shared_inc = concatenate(include_path, "\\shared");
-
-        var vsroot = concatenate(wide_to_mb(msvc.vs_library_path), "\\..\\..\\");
-
-        var cl_exe = concatenate(exe_path, "\\cl.exe");
-        var lib_exe = concatenate(exe_path, "\\lib.exe");
-
-        var args: [..] string;
-        args.add(cl_exe);
-        args.add(concatenate("/I", ucrt_inc));
-        args.add(concatenate("/I", um_inc));
-        args.add(concatenate("/I", shared_inc));
-        args.add(concatenate("/I", concatenate(vsroot, "\\include")));
-        args.add(src_path);
-        args.add("/c");
-        args.add(concatenate("/Fo", concatenate(output_no_ext, ".o")));
-
-        run_command(get_slice(args));
-        args.reset();
-
-        if (create_library) {
-            args.add(lib_exe);
-            args.add(concatenate(output_no_ext, ".o"));
-            args.add(concatenate("/out:", concatenate(output_no_ext, ".lib")));
-            run_command(get_slice(args));
-            args.reset();
-        }
-    } else {
-        var args: [..] string;
-        args.add("gcc");
-        args.add("-c");
-        args.add("-o");
-        args.add(concatenate(output_no_ext, ".o"));
-
-        args.add(src_path);
-        run_command(get_slice(args));
-        args.reset();
-
-        if (create_library) {
-            args.add("ar");
-            args.add("-r");
-            args.add(concatenate(output_no_ext, ".a"));
-            args.add(concatenate(output_no_ext, ".o"));
-            run_command(get_slice(args));
-            args.reset();
-        }
-    }
-}
-
 func copy_file(src: string, dst: string) {
     var src_contents = read_entire_file(src);
     if src_contents.success {
@@ -96,10 +25,22 @@ func copy_file(src: string, dst: string) {
     }
 }
 
+func setup_debug_config(compiler: *Compiler) {
+    compiler_add_preload_definition(compiler, "DEBUG");
+}
+
 func @metaprogram main(argc: int32, argv: **uint8) {
     var as_metaprogram = false;
     var compile_c_libs = false;
     var update_module_deps = false;
+
+    enum Config {
+        DEBUG;
+        RELEASE;
+    }
+
+    var config = Config.DEBUG;
+
     for 0..argc-1 {
         var s: string;
         s.data = argv[it];
@@ -130,6 +71,13 @@ func @metaprogram main(argc: int32, argv: **uint8) {
     // options.verbose_diagnostics = true;
     var compiler = create_compiler_instance(*options);
 
+    switch (config) {
+        case .DEBUG:
+            setup_debug_config(compiler);
+        case .RELEASE:
+            // @TODO
+    }
+
     var cwd = basename(@filepath);
     printf("build.jyu path: %.*s\n", cwd.length, cwd.data);
 
@@ -149,6 +97,7 @@ func @metaprogram main(argc: int32, argv: **uint8) {
     #if os(Windows) {
         var builder: String_Builder;
         builder.init();
+        defer builder.reset();
 
         builder.append(cwd);
         builder.putchar(PATH_SEPERATOR);
@@ -158,10 +107,9 @@ func @metaprogram main(argc: int32, argv: **uint8) {
 //         printf("Oculus path: %.*s\n", path.length, path.data);
         compiler_add_library_search_path(compiler, path);
 
-        free(path.data);
+        free(path);
 
         builder.reset();
-
         builder.init();
 
         builder.append(cwd);
@@ -169,12 +117,11 @@ func @metaprogram main(argc: int32, argv: **uint8) {
         builder.append(OCULUS_INCLUDE_PATH);
 
         path = builder.to_string();
+
 //         printf("Oculus include: %.*s\n", path.length, path.data);
         compiler_add_library_search_path(compiler, path);
 
-        free(path.data);
-
-        builder.reset();
+        free(path);
     }
 
     if compiler_load_file(compiler, "src/main.jyu") != true return;

@@ -170,8 +170,7 @@ func cache_to_vertex_buffer(model: *Model) {
         glGenBuffers(1, *model.vbo_handle);
     }
 
-    // @Cleanup UnaryNot
-    if model.is_dirty == false {
+    if !model.is_dirty {
         return;
     }
 

@@ -51,10 +51,9 @@ func load_obj(path: string) -> Model {
             // printf("SPLIT: '%.*s'\n".data, it.length, it.data);
         }
 
-        // @Cleanup continue keyword
-        if splits.count == 0 {
-            // do nothing
-        } else if splits[0] == "v" {
+        if splits.count == 0 continue;
+
+        if        splits[0] == "v" {
             var x = get_float(splits[1]);
             var y = get_float(splits[2]);
             var z = get_float(splits[3]);
