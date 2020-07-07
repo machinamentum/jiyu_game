@@ -137,6 +137,11 @@ func main(argc: int32, argv: **uint8) {
         if DEBUG printf("Exe path: '%.*s'\n", exe_path.length, exe_path.data);
         set_working_directory(basename(exe_path));
     }
+    
+    {
+        var cwd = get_working_directory();
+        printf("CWD: %.*s\n", cwd.length, cwd.data);
+    }
 
     if !glfwInit() return;
 
@@ -211,6 +216,7 @@ func main(argc: int32, argv: **uint8) {
     nk_font_atlas_init_default(*atlas);
     nk_font_atlas_begin(*atlas);
     font = nk_font_atlas_add_default(*atlas, 13, null);
+    
     var w: int32;
     var h: int32;
     var image = nk_font_atlas_bake(*atlas, *w, *h, NK_FONT_ATLAS_RGBA32);

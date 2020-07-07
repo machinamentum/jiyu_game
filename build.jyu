@@ -17,16 +17,6 @@
     let PATH_SEPERATOR = '/';
 }
 
-func concat(a: string, b: string) -> string {
-    var len = a.length + b.length;
-    var o: string;
-    o.data = cast() malloc(cast(size_t) len);
-    o.length = len;
-    memcpy(o.data, a.data, cast(size_t) a.length);
-    memcpy(o.data + a.length, b.data, cast(size_t) b.length);
-    return o;
-}
-
 func wide_to_mb(wide: *wchar_t) -> string {
     var size = wcstombs(null, wide, 0);
     var data = cast(*uint8) malloc(size + 1);
@@ -34,8 +24,10 @@ func wide_to_mb(wide: *wchar_t) -> string {
     return to_string(data);
 }
 
-func compile_c_lib(src_path: string, output_no_ext: string) {
+func compile_c_lib(src_path: string, output_no_ext: string, create_library = false) {
     #if os(Windows) {
+        #import "microsoft_craziness";
+
         var msvc: Find_Result;
         find_visual_studio_and_windows_sdk(*msvc);
 
@@ -46,48 +38,54 @@ func compile_c_lib(src_path: string, output_no_ext: string) {
 
         var exe_path = wide_to_mb(msvc.vs_exe_path);
         var include_path = wide_to_mb(msvc.windows_sdk_include);
-        var ucrt_inc = concat(include_path, "\\ucrt");
-        var um_inc   = concat(include_path, "\\um");
+        var ucrt_inc   = concatenate(include_path, "\\ucrt");
+        var um_inc     = concatenate(include_path, "\\um");
+        var shared_inc = concatenate(include_path, "\\shared");
 
-        var vsroot = concat(wide_to_mb(msvc.vs_library_path), "\\..\\..\\");
+        var vsroot = concatenate(wide_to_mb(msvc.vs_library_path), "\\..\\..\\");
 
-        var cl_exe = concat(exe_path, "\\cl.exe");
-        var lib_exe = concat(exe_path, "\\lib.exe");
+        var cl_exe = concatenate(exe_path, "\\cl.exe");
+        var lib_exe = concatenate(exe_path, "\\lib.exe");
 
         var args: [..] string;
         args.add(cl_exe);
-        args.add(concat("/I", ucrt_inc));
-        args.add(concat("/I", um_inc));
-        args.add(concat("/I", concat(vsroot, "\\include")));
+        args.add(concatenate("/I", ucrt_inc));
+        args.add(concatenate("/I", um_inc));
+        args.add(concatenate("/I", shared_inc));
+        args.add(concatenate("/I", concatenate(vsroot, "\\include")));
         args.add(src_path);
         args.add("/c");
-        args.add("/Fo.temp_c.obj");
+        args.add(concatenate("/Fo", concatenate(output_no_ext, ".o")));
 
         run_command(get_slice(args));
         args.reset();
 
-        args.add(lib_exe);
-        args.add(".temp_c.obj");
-        args.add(concat("/out:", concat(output_no_ext, ".lib")));
-        run_command(get_slice(args));
-        args.reset();
+        if (create_library) {
+            args.add(lib_exe);
+            args.add(concatenate(output_no_ext, ".o"));
+            args.add(concatenate("/out:", concatenate(output_no_ext, ".lib")));
+            run_command(get_slice(args));
+            args.reset();
+        }
     } else {
         var args: [..] string;
         args.add("gcc");
         args.add("-c");
         args.add("-o");
-        args.add(".temp_c.obj");
+        args.add(concatenate(output_no_ext, ".o"));
 
         args.add(src_path);
         run_command(get_slice(args));
         args.reset();
 
-        args.add("ar");
-        args.add("-r");
-        args.add(concat(output_no_ext, ".a"));
-        args.add(".temp_c.obj");
-        run_command(get_slice(args));
-        args.reset();
+        if (create_library) {
+            args.add("ar");
+            args.add("-r");
+            args.add(concatenate(output_no_ext, ".a"));
+            args.add(concatenate(output_no_ext, ".o"));
+            run_command(get_slice(args));
+            args.reset();
+        }
     }
 }
 
@@ -128,22 +126,26 @@ func @metaprogram main(argc: int32, argv: **uint8) {
 
     var options: Build_Options;
     options.executable_name = "run_tree/game";
-//     options.emit_llvm_ir = true;
-//     options.verbose_diagnostics = true;
+    // options.emit_llvm_ir = true;
+    // options.verbose_diagnostics = true;
     var compiler = create_compiler_instance(*options);
 
-    var cwd = get_working_directory();
-    compiler_add_library_search_path(compiler, concat(cwd, "/src"));
-    compiler_add_library_search_path(compiler, concat(cwd, "/run_tree"));
+    var cwd = basename(@filepath);
+    printf("build.jyu path: %.*s\n", cwd.length, cwd.data);
+
+    mkdir("build");
+
+    compiler_add_library_search_path(compiler, concatenate(cwd, "/src"));
+    compiler_add_library_search_path(compiler, concatenate(cwd, "/run_tree"));
+    compiler_add_library_search_path(compiler, concatenate(cwd, "/build"));
     compiler_add_library_search_path(compiler, cwd);
 
     if compile_c_libs {
-        #if os(Windows) {
-            compile_c_lib("src/nuklear.c", "run_tree/nuklear");
-        } else {
-            compile_c_lib("src/nuklear.c", "run_tree/libnuklear");
-        }
+        compile_c_lib("src/nuklear.c", "build/nuklear");
     }
+
+    compiler_add_compiled_object_for_linking(compiler, "build/nuklear.o");
+
     #if os(Windows) {
         var builder: String_Builder;
         builder.init();
@@ -179,6 +181,26 @@ func @metaprogram main(argc: int32, argv: **uint8) {
     if compiler_typecheck_program(compiler) != true return;
     if compiler_generate_llvm_module(compiler) != true return;
 
+    var out_modules = concatenate(cwd, "/run_tree/modules");
+
+    if update_module_deps {
+        mkdir(to_c_string(out_modules));
+
+        // Copy jiyu library to run tree
+        var jiyu_modules = compiler_system_get_default_module_search_path();
+        copy_file(concatenate(jiyu_modules, "/jiyu.dll"),      concatenate(cwd, "/run_tree/jiyu.dll"));
+        copy_file(concatenate(jiyu_modules, "/libjiyu.so"),    concatenate(cwd, "/run_tree/libjiyu.so"));
+        copy_file(concatenate(jiyu_modules, "/libjiyu.dylib"), concatenate(cwd, "/run_tree/libjiyu.dylib"));
+
+        // Copy some needed modules
+        copy_file(concatenate(jiyu_modules, "/Math.jyu"), concatenate(out_modules, "/Math.jyu"));
+        copy_file(concatenate(jiyu_modules, "/LibC.jyu"), concatenate(out_modules, "/LibC.jyu"));
+    }
+
+    var src_dir = concatenate(cwd, "/src");
+    // Always copy the Engine.jyu source to the final module directory.
+    copy_file(concatenate(src_dir, "/Engine.jyu"), concatenate(out_modules, "/Engine.jyu"));
+
     if as_metaprogram {
         set_working_directory("run_tree");
 
@@ -192,26 +214,4 @@ func @metaprogram main(argc: int32, argv: **uint8) {
     }
 
 //     destroy_compiler_instance(compiler);
-
-    var out_modules = concat(cwd, "/run_tree/modules");
-
-    if update_module_deps {
-        mkdir(to_c_string(out_modules));
-
-        // Copy jiyu library to run tree
-        var jiyu_modules = compiler_system_get_default_module_search_path();
-        copy_file(concat(jiyu_modules, "/jiyu.dll"),      concat(cwd, "/run_tree/jiyu.dll"));
-        copy_file(concat(jiyu_modules, "/libjiyu.so"),    concat(cwd, "/run_tree/libjiyu.so"));
-        copy_file(concat(jiyu_modules, "/libjiyu.dylib"), concat(cwd, "/run_tree/libjiyu.dylib"));
-
-        // Copy some needed modules
-        copy_file(concat(jiyu_modules, "/Math.jyu"), concat(out_modules, "/Math.jyu"));
-        copy_file(concat(jiyu_modules, "/LibC.jyu"), concat(out_modules, "/LibC.jyu"));
-    }
-
-    var src_dir = concat(cwd, "/src");
-    // Always copy the Engine.jyu source to the final module directory.
-    copy_file(concat(src_dir, "/Engine.jyu"), concat(out_modules, "/Engine.jyu"));
-
-    free(cwd.data);
 }

@@ -8,5 +8,5 @@
 #include "nuklear.h"
 """;
 
-library "nuklear";
+// library "nuklear";
 
